@@ -69,6 +69,37 @@ static void dx_collapseSearchBanner(id element) {
         zero.priority = 999;
         zero.active = YES;
     }
+
+    NSArray<NSString *> *containerKeys = @[@"view", @"containerView", @"componentView", @"contentView"];
+    for (NSString *key in containerKeys) {
+        id containerObject = nil;
+        @try {
+            containerObject = [element valueForKey:key];
+        } @catch (NSException *exception) {
+            continue;
+        }
+        if (![containerObject isKindOfClass:[UIView class]]) {
+            continue;
+        }
+        UIView *container = (UIView *)containerObject;
+        if (!gBannerProbed) {
+            [DouXTabsDebugReport appendFormat:@"banner-%@ = %s frame=%@\n", key, object_getClassName(container), NSStringFromCGRect(container.frame)];
+        }
+        BOOL hasZero = NO;
+        for (NSLayoutConstraint *constraint in container.constraints) {
+            BOOL isMine = constraint.firstItem == container || constraint.secondItem == container;
+            BOOL isHeight = constraint.firstAttribute == NSLayoutAttributeHeight || constraint.secondAttribute == NSLayoutAttributeHeight;
+            if (isMine && isHeight && constraint.constant == 0) {
+                hasZero = YES;
+                break;
+            }
+        }
+        if (!hasZero) {
+            NSLayoutConstraint *zero = [container.heightAnchor constraintEqualToConstant:0];
+            zero.priority = 999;
+            zero.active = YES;
+        }
+    }
 }
 
 static void dx_hideValueView(id object, NSString *key) {
