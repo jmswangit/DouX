@@ -107,7 +107,8 @@ static BOOL dx_shouldHideSidebarItem(id item) {
         return NO;
     }
     if ([item isKindOfClass:[NSString class]]) {
-        return [(NSString *)item.lowercaseString containsString:@"sidebar"];
+        NSString *lower = [(NSString *)item lowercaseString];
+        return [lower containsString:@"sidebar"];
     }
     const char *className = object_getClassName(item);
     if (className != NULL) {
@@ -182,10 +183,13 @@ static id dx_getterReplacement(id self, SEL _cmd) {
         NSMutableDictionary *filtered = [NSMutableDictionary dictionaryWithCapacity:dict.count];
         BOOL dropped = NO;
         for (id key in dict) {
-            if ([key isKindOfClass:[NSString class]] && [(NSString *)key.lowercaseString containsString:@"sidebar"]) {
-                dropped = YES;
-                [DouXTabsDebugReport appendFormat:@"  DROPPED_DICT_KEY@%s = %@\n", sel_getName(_cmd), key];
-                continue;
+            if ([key isKindOfClass:[NSString class]]) {
+                NSString *keyLower = [(NSString *)key lowercaseString];
+                if ([keyLower containsString:@"sidebar"]) {
+                    dropped = YES;
+                    [DouXTabsDebugReport appendFormat:@"  DROPPED_DICT_KEY@%s = %@\n", sel_getName(_cmd), key];
+                    continue;
+                }
             }
             filtered[key] = dict[key];
         }
