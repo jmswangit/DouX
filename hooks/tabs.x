@@ -51,7 +51,8 @@ static BOOL dx_match(NSString *value, NSArray<NSString *> *tokens) {
     }
     NSString *lower = value.lowercaseString;
     for (NSString *token in tokens) {
-        if ([lower isEqualToString:token] || [lower containsString:token]) {
+        NSString *t = token.lowercaseString;
+        if ([lower isEqualToString:t] || [lower containsString:t]) {
             return YES;
         }
     }
@@ -79,7 +80,7 @@ static BOOL dx_shouldHideTopTab(id item) {
         return YES;
     }
     if ([DouXManager hideTabCommunity] &&
-        (dx_match(ident, @[@"homepage_community", @"community"]) || dx_match(title, @[@"community"]))) {
+        (dx_match(ident, @[@"homepage_explore", @"homepage_community", @"community"]) || dx_match(title, @[@"community"]))) {
         return YES;
     }
     return NO;
@@ -129,11 +130,12 @@ static NSArray *dx_filterTabList(NSArray *items, const char *selectorName) {
     for (NSUInteger index = 0; index < items.count; index++) {
         id item = items[index];
         const char *itemClassName = object_getClassName(item);
-        if (itemClassName != NULL) {
-            NSString *seen = [NSString stringWithFormat:@"%s|%s", selectorName, itemClassName];
-            if (![gSeenItemClasses containsObject:seen] && gSeenItemClasses.count < 200) {
+        {
+            NSString *itemIdent = dx_itemIdentifier(item);
+            NSString *seen = [NSString stringWithFormat:@"%s|%@|%s", selectorName, itemIdent ?: @"", itemClassName ?: ""];
+            if (![gSeenItemClasses containsObject:seen] && gSeenItemClasses.count < 300) {
                 [gSeenItemClasses addObject:seen];
-                [DouXTabsDebugReport appendFormat:@"  item@%s = %s id=%@ title=%@\n", selectorName, itemClassName, dx_itemIdentifier(item), dx_itemTitle(item)];
+                [DouXTabsDebugReport appendFormat:@"  item@%s = %s id=%@\n", selectorName, itemClassName, itemIdent];
             }
         }
 
@@ -208,7 +210,8 @@ static id dx_transformReplacement(id self, SEL _cmd, id argument) {
 
 static BOOL dx_anyTabToggleEnabled(void) {
     return [DouXManager hideTabCommunity] || [DouXManager hideTabLocal] || [DouXManager hideTabFollowing] ||
-           [DouXManager hideTabFriends] || [DouXManager hideTabForYou] || [DouXManager hideTabShop] || [DouXManager hideTabPlus];
+           [DouXManager hideTabFriends] || [DouXManager hideTabForYou] || [DouXManager hideTabShop] || [DouXManager hideTabPlus] ||
+           [DouXManager hideSidebarArrow];
 }
 
 static void dx_swizzleSelectorEverywhere(SEL sel) {
@@ -310,42 +313,21 @@ static void dx_swizzleSelectorEverywhere(SEL sel) {
         %init(G_PlusButton);
     }
 
-    [DouXTabsDebugReport appendFormat:@"toggles community=%d local=%d following=%d friends=%d foryou=%d shop=%d plus=%d\n",
+    [DouXTabsDebugReport appendFormat:@"toggles community=%d local=%d following=%d friends=%d foryou=%d shop=%d plus=%d sidebar=%d\n",
         [DouXManager hideTabCommunity], [DouXManager hideTabLocal], [DouXManager hideTabFollowing],
-        [DouXManager hideTabFriends], [DouXManager hideTabForYou], [DouXManager hideTabShop], [DouXManager hideTabPlus]];
+        [DouXManager hideTabFriends], [DouXManager hideTabForYou], [DouXManager hideTabShop], [DouXManager hideTabPlus], [DouXManager hideSidebarArrow]];
 
     static const char *selectors[] = {
-        // top feed tabs
+        // top feed tabs (TTKTabTopEntranceResult)
         "topTabs",
         "setTopTabs:",
-        "topTabList",
-        "setTopTabList:",
-        "toptabItems",
-        "setToptabItems:",
-        "candidateTopTabs",
-        "finalTopTabs",
-        "enteredTopTabs",
-        "feedTabModels",
-        "setFeedTabModels:",
-        // bottom tab bar
-        "barItems",
-        "setBarItems:",
+        // bottom tab bar (TTKTabBar*Item)
         "tabBarItems",
         "setTabBarItems:",
-        "allTabbarItemCandidates",
-        // generic tab lists
-        "tabModels",
-        "setTabModels:",
-        "tabItems",
-        "setTabItems:",
-        "tabInfos",
-        "setTabInfos:",
-        "tabConfigs",
-        "setTabConfigs:",
         // feed tab-bar corner items (sidebar arrow)
-        "cornerItems",
         "tabCornerItems",
         "placeholderCornerItemTypes",
+        "cornerItems",
     };
 
     size_t selectorCount = sizeof(selectors) / sizeof(selectors[0]);
