@@ -102,6 +102,23 @@ static BOOL dx_shouldHideBottomTab(id item) {
     return NO;
 }
 
+static BOOL dx_shouldHideSidebarItem(id item) {
+    if (![DouXManager hideSidebarArrow]) {
+        return NO;
+    }
+    if ([item isKindOfClass:[NSString class]]) {
+        return [(NSString *)item.lowercaseString containsString:@"sidebar"];
+    }
+    const char *className = object_getClassName(item);
+    if (className != NULL) {
+        NSString *cls = [NSString stringWithUTF8String:className].lowercaseString;
+        if ([cls containsString:@"sidebar"]) {
+            return YES;
+        }
+    }
+    return dx_match(dx_itemIdentifier(item), @[@"sidebar", @"side_bar"]) || dx_match(dx_itemTitle(item), @[@"sidebar"]);
+}
+
 static NSArray *dx_filterTabList(NSArray *items, const char *selectorName) {
     if (![items isKindOfClass:[NSArray class]] || items.count == 0) {
         return items;
@@ -119,7 +136,7 @@ static NSArray *dx_filterTabList(NSArray *items, const char *selectorName) {
             }
         }
 
-        if (dx_shouldHideTopTab(item) || dx_shouldHideBottomTab(item)) {
+        if (dx_shouldHideTopTab(item) || dx_shouldHideBottomTab(item) || dx_shouldHideSidebarItem(item)) {
             os_log_info(tabs_log, "tabs: dropped %{public}s", itemClassName);
             [DouXTabsDebugReport appendFormat:@"  DROPPED@%s = %s (id=%@ title=%@)\n", selectorName, itemClassName, dx_itemIdentifier(item), dx_itemTitle(item)];
             if (kept == nil) {
@@ -159,6 +176,20 @@ static id dx_getterReplacement(id self, SEL _cmd) {
     id result = ((id (*)(id, SEL))orig)(self, _cmd);
     if ([result isKindOfClass:[NSArray class]]) {
         return dx_filterTabList(result, sel_getName(_cmd));
+    }
+    if ([result isKindOfClass:[NSDictionary class]] && [DouXManager hideSidebarArrow]) {
+        NSDictionary *dict = result;
+        NSMutableDictionary *filtered = [NSMutableDictionary dictionaryWithCapacity:dict.count];
+        BOOL dropped = NO;
+        for (id key in dict) {
+            if ([key isKindOfClass:[NSString class]] && [(NSString *)key.lowercaseString containsString:@"sidebar"]) {
+                dropped = YES;
+                [DouXTabsDebugReport appendFormat:@"  DROPPED_DICT_KEY@%s = %@\n", sel_getName(_cmd), key];
+                continue;
+            }
+            filtered[key] = dict[key];
+        }
+        return dropped ? filtered : result;
     }
     return result;
 }
@@ -307,6 +338,10 @@ static void dx_swizzleSelectorEverywhere(SEL sel) {
         "setTabInfos:",
         "tabConfigs",
         "setTabConfigs:",
+        // feed tab-bar corner items (sidebar arrow)
+        "cornerItems",
+        "tabCornerItems",
+        "placeholderCornerItemTypes",
     };
 
     size_t selectorCount = sizeof(selectors) / sizeof(selectors[0]);
