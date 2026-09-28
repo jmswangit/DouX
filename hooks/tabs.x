@@ -18,7 +18,7 @@
 
 static os_log_t tabs_log;
 static NSMutableDictionary *gOrigIMPs;
-static NSMutableString *gReport;
+NSMutableString *DouXTabsDebugReport;
 static NSMutableSet *gSeenItemClasses;
 
 static NSString *dx_stringForKeys(id object, NSArray<NSString *> *keys) {
@@ -115,13 +115,13 @@ static NSArray *dx_filterTabList(NSArray *items, const char *selectorName) {
             NSString *seen = [NSString stringWithFormat:@"%s|%s", selectorName, itemClassName];
             if (![gSeenItemClasses containsObject:seen] && gSeenItemClasses.count < 200) {
                 [gSeenItemClasses addObject:seen];
-                [gReport appendFormat:@"  item@%s = %s\n", selectorName, itemClassName];
+                [DouXTabsDebugReport appendFormat:@"  item@%s = %s id=%@ title=%@\n", selectorName, itemClassName, dx_itemIdentifier(item), dx_itemTitle(item)];
             }
         }
 
         if (dx_shouldHideTopTab(item) || dx_shouldHideBottomTab(item)) {
             os_log_info(tabs_log, "tabs: dropped %{public}s", itemClassName);
-            [gReport appendFormat:@"  DROPPED@%s = %s (id=%@ title=%@)\n", selectorName, itemClassName, dx_itemIdentifier(item), dx_itemTitle(item)];
+            [DouXTabsDebugReport appendFormat:@"  DROPPED@%s = %s (id=%@ title=%@)\n", selectorName, itemClassName, dx_itemIdentifier(item), dx_itemTitle(item)];
             if (kept == nil) {
                 kept = [NSMutableArray arrayWithArray:[items subarrayWithRange:NSMakeRange(0, index)]];
             }
@@ -240,7 +240,7 @@ static void dx_swizzleSelectorEverywhere(SEL sel) {
         NSString *key = [NSString stringWithFormat:@"%s|%s", class_getName(cls), sel_getName(sel)];
         gOrigIMPs[key] = [NSValue valueWithPointer:original];
         method_setImplementation(method, replacement);
-        [gReport appendFormat:@"swizzled %s -> %s\n", sel_getName(sel), class_getName(cls)];
+        [DouXTabsDebugReport appendFormat:@"swizzled %s -> %s\n", sel_getName(sel), class_getName(cls)];
     }
 
     free(classes);
@@ -268,14 +268,14 @@ static void dx_swizzleSelectorEverywhere(SEL sel) {
 %ctor {
     tabs_log = os_log_create("com.kunihir0.doux", "Tabs");
     gOrigIMPs = [NSMutableDictionary dictionary];
-    gReport = [NSMutableString string];
+    DouXTabsDebugReport = [NSMutableString string];
     gSeenItemClasses = [NSMutableSet set];
 
     if (objc_getClass("AWETabBarPlusButton") != nil) {
         %init(G_PlusButton);
     }
 
-    [gReport appendFormat:@"toggles community=%d local=%d following=%d friends=%d foryou=%d shop=%d plus=%d\n",
+    [DouXTabsDebugReport appendFormat:@"toggles community=%d local=%d following=%d friends=%d foryou=%d shop=%d plus=%d\n",
         [DouXManager hideTabCommunity], [DouXManager hideTabLocal], [DouXManager hideTabFollowing],
         [DouXManager hideTabFriends], [DouXManager hideTabForYou], [DouXManager hideTabShop], [DouXManager hideTabPlus]];
 
@@ -315,9 +315,9 @@ static void dx_swizzleSelectorEverywhere(SEL sel) {
             dx_swizzleSelectorEverywhere(sel_registerName(selectors[i]));
         }
     } else {
-        [gReport appendString:@"no top/tab-bar toggle enabled\n"];
+        [DouXTabsDebugReport appendString:@"no top/tab-bar toggle enabled\n"];
     }
 
-    [[NSUserDefaults standardUserDefaults] setObject:gReport forKey:@"tab_debug_report"];
+    [[NSUserDefaults standardUserDefaults] setObject:DouXTabsDebugReport forKey:@"tab_debug_report"];
     [[NSUserDefaults standardUserDefaults] synchronize];
 }

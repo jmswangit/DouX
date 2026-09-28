@@ -11,6 +11,8 @@
 #import "PlaybackSpeed.h"
 #import "VaultViewController.h"
 
+extern NSMutableString *DouXTabsDebugReport;
+
 @interface ViewController ()
 @property (nonatomic, strong) UITableView *staticTable;
 @end
@@ -225,7 +227,7 @@
         } else if (indexPath.row == 1) {
             [[UIApplication sharedApplication] openURL:[NSURL URLWithString:@"https://x.com/FBI"] options:@{} completionHandler:nil];
         } else if (indexPath.row == 2) {
-            NSString *report = [[NSUserDefaults standardUserDefaults] stringForKey:@"tab_debug_report"];
+            NSString *report = DouXTabsDebugReport != nil ? [DouXTabsDebugReport copy] : [[NSUserDefaults standardUserDefaults] stringForKey:@"tab_debug_report"];
             if (report.length == 0) {
                 report = @"(empty - no report stored yet)";
             }
