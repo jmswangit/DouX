@@ -38,6 +38,9 @@ jobs:
       - name: Accept Xcode License
         run: sudo xcodebuild -license accept
 
+      - name: Embed JGProgressHUD (self-contained build)
+        run: git apply scripts/compile_jgprogresshud.patch
+
       - name: Install Theos
         if: steps.cache-theos.outputs.cache-hit != 'true'
         run: |
