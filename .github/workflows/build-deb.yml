@@ -33,7 +33,7 @@ jobs:
       - name: Setup Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: '16.2'
+          xcode-version: 'latest'
 
       - name: Accept Xcode License
         run: sudo xcodebuild -license accept
