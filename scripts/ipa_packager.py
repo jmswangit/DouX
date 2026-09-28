@@ -270,7 +270,8 @@ def main(ipa_input, tweak_url):
         run_command([
              str(WORK_DIR / "bin" / "ipapatch"),
             "-input", str(injected_ipa),
-            "-output", str(patched_ipa)
+            "-output", str(patched_ipa),
+            "--noconfirm"
         ])
         print("✅ IPA patched successfully.")
         
