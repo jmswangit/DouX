@@ -437,23 +437,53 @@ static void dx_hideTabBarButtonIfShop(UIView *button) {
     }
 }
 
-static void dx_centerInboxIfNeeded(UIView *button) {
-    if (![DouXManager centerInbox]) {
+static BOOL dx_isTabBarButton(UIView *view) {
+    if ([view isKindOfClass:NSClassFromString(@"TTKTabBarButton")]) {
+        return YES;
+    }
+    if ([view isKindOfClass:NSClassFromString(@"AWETabBarPlusButton")]) {
+        return YES;
+    }
+    return NO;
+}
+
+static void dx_evenOutTabBar(UIView *bar) {
+    if (![DouXManager evenOutTabs]) {
         return;
     }
-    NSString *text = dx_firstTextInView(button);
-    if (text.length == 0 || ![[text lowercaseString] containsString:@"inbox"]) {
-        return;
-    }
-    UIView *bar = button.superview;
     if (bar == nil || bar.bounds.size.width <= 0) {
         return;
     }
-    CGFloat targetX = bar.bounds.size.width / 2.0;
-    if (fabs(button.center.x - targetX) > 0.5) {
-        CGPoint center = button.center;
-        center.x = targetX;
-        button.center = center;
+
+    NSMutableArray<UIView *> *visible = [NSMutableArray array];
+    for (UIView *sub in bar.subviews) {
+        if (sub.hidden || sub.alpha < 0.01) {
+            continue;
+        }
+        if (dx_isTabBarButton(sub)) {
+            [visible addObject:sub];
+        }
+    }
+    NSUInteger count = visible.count;
+    if (count == 0) {
+        return;
+    }
+
+    [visible sortUsingComparator:^NSComparisonResult(UIView *a, UIView *b) {
+        if (a.center.x < b.center.x) return NSOrderedAscending;
+        if (a.center.x > b.center.x) return NSOrderedDescending;
+        return NSOrderedSame;
+    }];
+
+    CGFloat width = bar.bounds.size.width;
+    for (NSUInteger i = 0; i < count; i++) {
+        UIView *button = visible[i];
+        CGFloat targetX = width * (CGFloat)(i + 1) / (CGFloat)(count + 1);
+        if (fabs(button.center.x - targetX) > 0.5) {
+            CGPoint center = button.center;
+            center.x = targetX;
+            button.center = center;
+        }
     }
 }
 
@@ -466,6 +496,7 @@ static void dx_centerInboxIfNeeded(UIView *button) {
         self.alpha = 0.0;
     }
     dx_probeTabBar(self.superview);
+    dx_evenOutTabBar(self.superview);
 }
 - (void)layoutSubviews {
     %orig;
@@ -474,6 +505,7 @@ static void dx_centerInboxIfNeeded(UIView *button) {
         self.alpha = 0.0;
     }
     dx_probeTabBar(self.superview);
+    dx_evenOutTabBar(self.superview);
 }
 %end
 %end
@@ -483,12 +515,12 @@ static void dx_centerInboxIfNeeded(UIView *button) {
 - (void)didMoveToWindow {
     %orig;
     dx_hideTabBarButtonIfShop(self);
-    dx_centerInboxIfNeeded(self);
+    dx_evenOutTabBar(self.superview);
 }
 - (void)layoutSubviews {
     %orig;
     dx_hideTabBarButtonIfShop(self);
-    dx_centerInboxIfNeeded(self);
+    dx_evenOutTabBar(self.superview);
 }
 %end
 %end

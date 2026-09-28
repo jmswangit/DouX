@@ -54,7 +54,7 @@
 + (BOOL)hideTabShop;
 + (BOOL)hideTabPlus;
 + (BOOL)hideSidebarArrow;
-+ (BOOL)centerInbox;
++ (BOOL)evenOutTabs;
 + (void)showSaveVC:(NSArray<NSURL *> *)item;
 + (void)cleanCache;
 + (BOOL)isEmpty:(NSURL *)url;

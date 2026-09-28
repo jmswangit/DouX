@@ -116,7 +116,7 @@ extern NSMutableString *DouXTabsDebugReport;
             case 4: return [self createSwitchCellWithTitle:@"Hide “For You” Tab" Detail:@"Hide the For You top tab" Key:@"hide_tab_foryou"];
             case 5: return [self createSwitchCellWithTitle:@"Hide Shop Tab" Detail:@"Hide the Shop tab on the bottom bar" Key:@"hide_tab_shop"];
             case 6: return [self createSwitchCellWithTitle:@"Hide Upload (+) Button" Detail:@"Hide the + upload button on the bottom bar" Key:@"hide_tab_plus"];
-            case 7: return [self createSwitchCellWithTitle:@"Center Inbox Tab" Detail:@"Move the Inbox tab to the middle of the bottom bar" Key:@"center_inbox"];
+            case 7: return [self createSwitchCellWithTitle:@"Even Out Bottom Tabs" Detail:@"Spread the remaining bottom tabs evenly across the bar" Key:@"even_out_tabs"];
         }
     } else if (indexPath.section == 2) {
         switch (indexPath.row) {
