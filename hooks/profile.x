@@ -60,14 +60,14 @@
         if ([DouXManager videoLikeCount]) {
         [self.contentView addSubview:heartImage];
         [NSLayoutConstraint activateConstraints:@[
-                [heartImage.topAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.topAnchor constant:110],
+                [heartImage.topAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.topAnchor constant:133],
                 [heartImage.leadingAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.leadingAnchor constant:4],
                 [heartImage.widthAnchor constraintEqualToConstant:16],
                 [heartImage.heightAnchor constraintEqualToConstant:16],
             ]];
         [self.contentView addSubview:likeCountLabel];
         [NSLayoutConstraint activateConstraints:@[
-                [likeCountLabel.topAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.topAnchor constant:121],
+                [likeCountLabel.topAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.topAnchor constant:133],
                 [likeCountLabel.leadingAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.leadingAnchor constant:23],
                 [likeCountLabel.widthAnchor constraintEqualToConstant:200],
                 [likeCountLabel.heightAnchor constraintEqualToConstant:16],
@@ -76,14 +76,14 @@
         if ([DouXManager videoUploadDate]) {
         [self.contentView addSubview:clockImage];
         [NSLayoutConstraint activateConstraints:@[
-                [clockImage.topAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.topAnchor constant:128],
+                [clockImage.topAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.topAnchor constant:151],
                 [clockImage.leadingAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.leadingAnchor constant:4],
                 [clockImage.widthAnchor constraintEqualToConstant:16],
                 [clockImage.heightAnchor constraintEqualToConstant:16],
             ]];
         [self.contentView addSubview:uploadDateLabel];
         [NSLayoutConstraint activateConstraints:@[
-                [uploadDateLabel.topAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.topAnchor constant:139],
+                [uploadDateLabel.topAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.topAnchor constant:151],
                 [uploadDateLabel.leadingAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.leadingAnchor constant:23],
                 [uploadDateLabel.widthAnchor constraintEqualToConstant:200],
                 [uploadDateLabel.heightAnchor constraintEqualToConstant:16],
