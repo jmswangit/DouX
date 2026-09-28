@@ -57,6 +57,7 @@
 + (BOOL)evenOutTabs;
 + (BOOL)hideAnchorLink;
 + (BOOL)hideSearchSuggestion;
++ (BOOL)inboxBadgeDmsOnly;
 + (void)showSaveVC:(NSArray<NSURL *> *)item;
 + (void)cleanCache;
 + (BOOL)isEmpty:(NSURL *)url;

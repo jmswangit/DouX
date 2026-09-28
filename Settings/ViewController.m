@@ -75,7 +75,7 @@ extern NSMutableString *DouXTabsDebugReport;
         case 1: return 8;
         case 2: return 4;
         case 3: return 4;
-        case 4: return 2;
+        case 4: return 3;
         case 5: return 10;
         case 6: return 2;
         case 7: return 2;
@@ -138,6 +138,7 @@ extern NSMutableString *DouXTabsDebugReport;
         switch (indexPath.row) {
             case 0: return [self createSwitchCellWithTitle:@"Hide Tako (AI)" Detail:@"Hide TikTok's AI assistant (Tako) entrances" Key:@"hide_tako"];
             case 1: return [self createSwitchCellWithTitle:@"Hide Comment Likes" Detail:@"Hide \"liked your comment\" entries from the Activity inbox" Key:@"hide_comment_like_notices"];
+            case 2: return [self createSwitchCellWithTitle:@"Inbox Badge: DMs/System Only" Detail:@"Don't let Activity (likes/comments/follows) badge the bottom Inbox tab" Key:@"inbox_badge_dms_only"];
         }
     } else if (indexPath.section == 5) {
         switch (indexPath.row) {
