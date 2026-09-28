@@ -150,7 +150,7 @@ static NSArray *dx_filterTabList(NSArray *items, const char *selectorName) {
         {
             NSString *itemIdent = dx_itemIdentifier(item);
             NSString *seen = [NSString stringWithFormat:@"%s|%@|%s", selectorName, itemIdent ?: @"", itemClassName ?: ""];
-            if (![gSeenItemClasses containsObject:seen] && gSeenItemClasses.count < 300) {
+            if (![gSeenItemClasses containsObject:seen] && gSeenItemClasses.count < 80) {
                 [gSeenItemClasses addObject:seen];
                 [DouXTabsDebugReport appendFormat:@"  item@%s = %s id=%@\n", selectorName, itemClassName, itemIdent];
             }
@@ -576,10 +576,10 @@ static void dx_evenOutTabBar(UIView *bar) {
         [DouXTabsDebugReport appendString:@"no top/tab-bar toggle enabled\n"];
     }
 
-    dx_dumpMethods("TUXSwift.TUXTabBar");
-    dx_dumpMethods("AWESlidingTabbarView");
-    dx_dumpMethods("TikTokTabBarImpl.TTKTabBarItemsManager");
-    dx_dumpMethods("TTKTabBarManager");
+    dx_dumpMethods("AWEPlayInteractionAnchorElement");
+    dx_dumpMethods("TTKFeedSearchRSBannerElement");
+    dx_dumpMethods("TTKECFeedSearchRSBannerElement");
+    dx_dumpMethods("AWEPlayInteractionAuthorView");
 
     [[NSUserDefaults standardUserDefaults] setObject:DouXTabsDebugReport forKey:@"tab_debug_report"];
     [[NSUserDefaults standardUserDefaults] synchronize];
