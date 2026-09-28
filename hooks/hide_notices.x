@@ -4,6 +4,10 @@
 #import <os/log.h>
 #import <string.h>
 
+@interface NSObject (DouXNoticeFlags)
+- (BOOL)isFromDiggCommentNotification;
+@end
+
 //
 //  Hide "liked your comment" entries from the Activity / inbox list.
 //
