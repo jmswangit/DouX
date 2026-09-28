@@ -16,7 +16,7 @@ set -euo pipefail
 IPA="${1:-$HOME/Downloads/com.zhiliaoapp.musically-47.0.0-Decrypted.ipa}"
 DEVICE="${2:-jacobs-iphone}"
 SCHEME="${3:-rootless}"
-REPO="${DOUX_REPO:-jmswangit/DouX}"
+REPO="${DOUX_REPO:-jmswangit/TokMods}"
 TS="/Applications/Tailscale.app/Contents/MacOS/Tailscale"
 
 cd "$(dirname "$0")/.."

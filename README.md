@@ -1,6 +1,6 @@
-# DouX
+# TokMods
 
-A powerful iOS tweak that enhances your TikTok experience with additional features like ad blocking, video downloads, and UI customization.
+A fork of **DouX** (a TikTok enhancement tweak) adding privacy, tab and bottom-bar controls on top of everything DouX already does. Still a fork of [kunihir0/DouX](https://github.com/kunihir0/DouX). See [What's different from DouX](#whats-different-from-doux) below.
 
 [![Documentation](https://img.shields.io/badge/docs-comprehensive-blue.svg)](docs/)
 [![Platform](https://img.shields.io/badge/platform-iOS-lightgrey.svg)](https://developer.apple.com/ios/)
@@ -19,18 +19,33 @@ A powerful iOS tweak that enhances your TikTok experience with additional featur
 - Region Spoofing: Access content from different countries
 - Enhanced Playback: Speed controls and auto-play options
 
-## Fork additions
+## What's different from DouX
 
-This fork adds a dedicated **Inbox & AI** section to DouX settings with two privacy toggles:
+This is a fork of [DouX](https://github.com/kunihir0/DouX) (itself a fork of BHTikTok++). Everything DouX does is kept; the tweak's own settings are renamed to **TokMods Settings**, and this fork adds:
 
-- **Hide Tako (AI)** — hides TikTok's AI assistant (Tako) entrances across the feed, search and comment bar.
+### Inbox & AI (new section)
+- **Hide Tako (AI)** — hides TikTok's AI assistant (Tako) entrances in the feed, search and comment bar.
 - **Hide Comment Likes** — removes "liked your comment" entries from the Activity / inbox list.
 
-Both are backed by `NSUserDefaults` keys (`hide_tako`, `hide_comment_like_notices`) read through `DouXManager`
-and implemented in `hooks/hide_tako.x` and `hooks/hide_notices.x`. Toggle them and relaunch TikTok to apply.
+### Tabs (new section)
+- Hide the **Community / Local / Following / Friends / For You** top tabs individually.
+- Hide the **Shop** tab and the **Upload (+)** button on the bottom bar.
+- **Even Out Bottom Tabs** — spreads the remaining bottom tabs evenly across the bar.
 
-To build and run the tweak without a jailbreak (LiveContainer / TrollStore), use the **Build DouX Deb**
-workflow, then inject the resulting `.deb` into a decrypted IPA with `scripts/ipa_packager.py`.
+### Feed (new toggles)
+- **Hide Sidebar Arrow** — hides the small slide-out arrow at the top-left of the feed.
+- **Hide Suggested Search** — hides the search-suggestion (related search) bar at the bottom of a video.
+- **Hide Anchor Link** — hides the shop / location / TV-show link above the creator's username.
+
+### Other changes
+- **Disable Live Button** — the old "Live Button Function" picker is replaced by a single toggle that hides the LIVE button on the feed.
+- **Upload date** now shows as **M/DD/YY** (previously DD.MM.YY), and the like-count / date labels are nudged down slightly.
+
+### Implementation notes
+- New hooks live in `hooks/hide_tako.x`, `hooks/hide_notices.x`, `hooks/tabs.x` and `hooks/feed_elements.x`.
+- The build is self-contained (JGProgressHUD is compiled in), so the injected dylib has no external library dependency — build with the **Build DouX Deb** action, then inject with `scripts/ipa_packager.py`.
+
+The upstream DouX documentation below is unchanged.
 
 ## Installation
 
