@@ -16,6 +16,9 @@
 @interface AWETabBarPlusButton : UIButton
 @end
 
+@interface AWETabBarButton : UIView
+@end
+
 static os_log_t tabs_log;
 static NSMutableDictionary *gOrigIMPs;
 NSMutableString *DouXTabsDebugReport;
@@ -401,6 +404,43 @@ static void dx_dumpMethods(const char *className) {
 %end
 %end
 
+static NSString *dx_firstTextInView(UIView *view) {
+    if ([view isKindOfClass:[UILabel class]]) {
+        return ((UILabel *)view).text;
+    }
+    for (UIView *sub in view.subviews) {
+        NSString *text = dx_firstTextInView(sub);
+        if (text.length > 0) {
+            return text;
+        }
+    }
+    return nil;
+}
+
+static void dx_hideTabBarButtonIfShop(UIView *button) {
+    if (![DouXManager hideTabShop]) {
+        return;
+    }
+    NSString *text = dx_firstTextInView(button);
+    if (text.length > 0 && [[text lowercaseString] containsString:@"shop"]) {
+        button.hidden = YES;
+        button.alpha = 0.0;
+    }
+}
+
+%group G_TabBarButton
+%hook AWETabBarButton
+- (void)didMoveToWindow {
+    %orig;
+    dx_hideTabBarButtonIfShop(self);
+}
+- (void)layoutSubviews {
+    %orig;
+    dx_hideTabBarButtonIfShop(self);
+}
+%end
+%end
+
 %ctor {
     tabs_log = os_log_create("com.kunihir0.doux", "Tabs");
     gOrigIMPs = [NSMutableDictionary dictionary];
@@ -409,6 +449,9 @@ static void dx_dumpMethods(const char *className) {
 
     if (objc_getClass("AWETabBarPlusButton") != nil) {
         %init(G_PlusButton);
+    }
+    if (objc_getClass("AWETabBarButton") != nil) {
+        %init(G_TabBarButton);
     }
 
     [DouXTabsDebugReport appendFormat:@"toggles community=%d local=%d following=%d friends=%d foryou=%d shop=%d plus=%d sidebar=%d\n",
