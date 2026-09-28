@@ -7,14 +7,17 @@
 //
 //  Adds a DouX settings entry point to the profile "≡" menu.
 //
-//  TikTok's profile menu is composed of server-keyed cell models (settings_and_privacy,
-//  qr_code, ...) that map to fixed local components, so a custom row can't be injected
-//  reliably. Instead we hook the menu's view controller and add our own control: a
-//  navigation-bar gear when it lives in a navigation controller, otherwise a small
-//  floating gear in the top-right corner of the menu panel.
+//  TikTok's profile menu is a TTKC component tree (RootComponent / ContentComponent /
+//  SectionComponent) rendered inside TTKProfileMenuFloatingPanelContainer, with
+//  TTKProfileMenuViewController as the page. We can't inject a native row (items are
+//  server-keyed to fixed components), so we add our own gear control and hook both the
+//  page VC and the floating panel container, de-duplicating via a view tag.
 //
 
 @interface TTKProfileMenuViewController : UIViewController
+@end
+
+@interface TTKProfileMenuFloatingPanelContainer : UIView
 @end
 
 @interface DXMenuActionTarget : NSObject
@@ -25,13 +28,15 @@
 @end
 
 static os_log_t profile_menu_log;
-static const void *kDouXMenuButtonKey = &kDouXMenuButtonKey;
-static const void *kDouXTargetKey = &kDouXTargetKey;
+static const NSInteger kDouXButtonTag = 0xD0C5;
 
 @implementation DXMenuActionTarget
 
 - (void)openDouxSettings {
     UIViewController *host = self.host;
+    if (host == nil) {
+        host = topMostController();
+    }
     if (host == nil) {
         return;
     }
@@ -56,43 +61,53 @@ static const void *kDouXTargetKey = &kDouXTargetKey;
 
 @end
 
-static UIBarButtonItem *dx_makeMenuBarButton(UIViewController *host) {
+static DXMenuActionTarget *dx_targetForViewController(UIViewController *host) {
     DXMenuActionTarget *target = [DXMenuActionTarget new];
     target.host = host;
-
-    UIButton *button = [UIButton buttonWithType:UIButtonTypeSystem];
-    [button setImage:[UIImage systemImageNamed:@"gearshape.fill"] forState:UIControlStateNormal];
-    button.frame = CGRectMake(0, 0, 32, 32);
-    [button addTarget:target action:@selector(openDouxSettings) forControlEvents:UIControlEventTouchUpInside];
-    objc_setAssociatedObject(button, kDouXTargetKey, target, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-
-    UIBarButtonItem *item = [[UIBarButtonItem alloc] initWithCustomView:button];
-    item.accessibilityLabel = @"DouX settings";
-    return item;
+    return target;
 }
 
-static void dx_addFloatingMenuButton(UIViewController *host) {
-    DXMenuActionTarget *target = [DXMenuActionTarget new];
-    target.host = host;
-
+static UIButton *dx_makeGearButton(void) {
     UIButton *button = [UIButton buttonWithType:UIButtonTypeSystem];
     [button setImage:[UIImage systemImageNamed:@"gearshape.fill"] forState:UIControlStateNormal];
+    button.tag = kDouXButtonTag;
     button.tintColor = [UIColor labelColor];
     button.backgroundColor = [UIColor colorWithWhite:0.5 alpha:0.25];
     button.layer.cornerRadius = 18.0;
     button.translatesAutoresizingMaskIntoConstraints = NO;
-    [button addTarget:target action:@selector(openDouxSettings) forControlEvents:UIControlEventTouchUpInside];
-    objc_setAssociatedObject(button, kDouXTargetKey, target, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    return button;
+}
 
-    UIView *container = host.view;
-    [container addSubview:button];
+static BOOL dx_alreadyAdded(UIView *hostView) {
+    if ([hostView viewWithTag:kDouXButtonTag] != nil) {
+        return YES;
+    }
+    UIWindow *window = hostView.window;
+    if (window != nil && [window viewWithTag:kDouXButtonTag] != nil) {
+        return YES;
+    }
+    return NO;
+}
+
+static void dx_addFloatingButton(UIView *hostView, UIViewController *hostVC) {
+    if (hostView == nil || dx_alreadyAdded(hostView)) {
+        return;
+    }
+
+    DXMenuActionTarget *target = dx_targetForViewController(hostVC);
+    UIButton *button = dx_makeGearButton();
+    [button addTarget:target action:@selector(openDouxSettings) forControlEvents:UIControlEventTouchUpInside];
+
+    [hostView addSubview:button];
     [NSLayoutConstraint activateConstraints:@[
-        [button.topAnchor constraintEqualToAnchor:container.safeAreaLayoutGuide.topAnchor constant:8.0],
-        [button.trailingAnchor constraintEqualToAnchor:container.trailingAnchor constant:-12.0],
+        [button.topAnchor constraintEqualToAnchor:hostView.safeAreaLayoutGuide.topAnchor constant:10.0],
+        [button.trailingAnchor constraintEqualToAnchor:hostView.trailingAnchor constant:-12.0],
         [button.widthAnchor constraintEqualToConstant:36.0],
         [button.heightAnchor constraintEqualToConstant:36.0]
     ]];
-    objc_setAssociatedObject(container, kDouXMenuButtonKey, button, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    [hostView bringSubviewToFront:button];
+
+    os_log_info(profile_menu_log, "profileMenu: floating gear added to %{public}s", class_getName([hostView class]));
 }
 
 %hook TTKProfileMenuViewController
@@ -102,13 +117,32 @@ static void dx_addFloatingMenuButton(UIViewController *host) {
 
     if (self.navigationController != nil) {
         if (self.navigationItem.rightBarButtonItem == nil) {
-            self.navigationItem.rightBarButtonItem = dx_makeMenuBarButton(self);
+            DXMenuActionTarget *target = dx_targetForViewController(self);
+            UIButton *custom = dx_makeGearButton();
+            custom.frame = CGRectMake(0, 0, 32, 32);
+            [custom addTarget:target action:@selector(openDouxSettings) forControlEvents:UIControlEventTouchUpInside];
+            UIBarButtonItem *item = [[UIBarButtonItem alloc] initWithCustomView:custom];
+            item.accessibilityLabel = @"DouX settings";
+            self.navigationItem.rightBarButtonItem = item;
+            os_log_info(profile_menu_log, "profileMenu: nav gear added");
         }
-    } else if (objc_getAssociatedObject(self, kDouXMenuButtonKey) == nil) {
-        dx_addFloatingMenuButton(self);
+    } else {
+        dx_addFloatingButton(self.view, self);
     }
+}
 
-    os_log_info(profile_menu_log, "profileMenu: DouX entry added");
+%end
+
+%hook TTKProfileMenuFloatingPanelContainer
+
+- (void)didMoveToWindow {
+    %orig;
+    dx_addFloatingButton(self, nil);
+}
+
+- (void)layoutSubviews {
+    %orig;
+    dx_addFloatingButton(self, nil);
 }
 
 %end
