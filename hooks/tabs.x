@@ -351,6 +351,23 @@ static void dx_swizzleAddSelectorEverywhere(SEL sel) {
     free(classes);
 }
 
+static void dx_dumpMethods(const char *className) {
+    Class cls = objc_getClass(className);
+    if (cls == Nil) {
+        [DouXTabsDebugReport appendFormat:@"\n(no class %s)\n", className];
+        return;
+    }
+    unsigned int count = 0;
+    Method *methods = class_copyMethodList(cls, &count);
+    [DouXTabsDebugReport appendFormat:@"\n--- methods of %s ---\n", className];
+    for (unsigned int i = 0; i < count; i++) {
+        [DouXTabsDebugReport appendFormat:@"%s\n", sel_getName(method_getName(methods[i]))];
+    }
+    if (methods != NULL) {
+        free(methods);
+    }
+}
+
 %group G_PlusButton
 %hook AWETabBarPlusButton
 - (void)didMoveToWindow {
@@ -414,6 +431,11 @@ static void dx_swizzleAddSelectorEverywhere(SEL sel) {
     } else {
         [DouXTabsDebugReport appendString:@"no top/tab-bar toggle enabled\n"];
     }
+
+    dx_dumpMethods("TUXSwift.TUXTabBar");
+    dx_dumpMethods("AWESlidingTabbarView");
+    dx_dumpMethods("TikTokTabBarImpl.TTKTabBarItemsManager");
+    dx_dumpMethods("TTKTabBarManager");
 
     [[NSUserDefaults standardUserDefaults] setObject:DouXTabsDebugReport forKey:@"tab_debug_report"];
     [[NSUserDefaults standardUserDefaults] synchronize];
