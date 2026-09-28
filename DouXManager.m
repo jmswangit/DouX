@@ -140,6 +140,38 @@ static os_log_t douxmanager_log;
 + (BOOL)hideCommentLikeNotices {
     return [[NSUserDefaults standardUserDefaults] boolForKey:@"hide_comment_like_notices"];
 }
+
++ (BOOL)disableLiveButton {
+    return [[NSUserDefaults standardUserDefaults] boolForKey:@"disable_live_button"];
+}
+
++ (BOOL)hideTabCommunity {
+    return [[NSUserDefaults standardUserDefaults] boolForKey:@"hide_tab_community"];
+}
+
++ (BOOL)hideTabLocal {
+    return [[NSUserDefaults standardUserDefaults] boolForKey:@"hide_tab_local"];
+}
+
++ (BOOL)hideTabFollowing {
+    return [[NSUserDefaults standardUserDefaults] boolForKey:@"hide_tab_following"];
+}
+
++ (BOOL)hideTabFriends {
+    return [[NSUserDefaults standardUserDefaults] boolForKey:@"hide_tab_friends"];
+}
+
++ (BOOL)hideTabForYou {
+    return [[NSUserDefaults standardUserDefaults] boolForKey:@"hide_tab_foryou"];
+}
+
++ (BOOL)hideTabShop {
+    return [[NSUserDefaults standardUserDefaults] boolForKey:@"hide_tab_shop"];
+}
+
++ (BOOL)hideTabPlus {
+    return [[NSUserDefaults standardUserDefaults] boolForKey:@"hide_tab_plus"];
+}
 + (void)cleanCache {
     NSArray <NSURL *> *DocumentFiles = [[NSFileManager defaultManager] contentsOfDirectoryAtURL:[NSURL fileURLWithPath:NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, true).firstObject] includingPropertiesForKeys:@[] options:NSDirectoryEnumerationSkipsHiddenFiles error:nil];
     

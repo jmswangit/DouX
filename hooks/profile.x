@@ -106,7 +106,7 @@
 
     NSDate *date = [NSDate dateWithTimeIntervalSince1970:timestamp];
     NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-    dateFormatter.dateFormat = @"dd.MM.yy"; 
+    dateFormatter.dateFormat = @"MM/dd/yy";
     return [dateFormatter stringFromDate:date];
 
 }

@@ -45,6 +45,14 @@
 + (BOOL)showVaultButton;
 + (BOOL)hideTako;
 + (BOOL)hideCommentLikeNotices;
++ (BOOL)disableLiveButton;
++ (BOOL)hideTabCommunity;
++ (BOOL)hideTabLocal;
++ (BOOL)hideTabFollowing;
++ (BOOL)hideTabFriends;
++ (BOOL)hideTabForYou;
++ (BOOL)hideTabShop;
++ (BOOL)hideTabPlus;
 + (void)showSaveVC:(NSArray<NSURL *> *)item;
 + (void)cleanCache;
 + (BOOL)isEmpty:(NSURL *)url;

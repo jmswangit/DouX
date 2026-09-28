@@ -261,6 +261,9 @@
 
 %hook AWELiveFeedEntranceView
 - (void)switchStateWithTapped:(BOOL)arg1 {
+    if ([DouXManager disableLiveButton]) {
+        return;
+    }
     if (![DouXManager liveActionEnabled] || [DouXManager selectedLiveAction] == 0) {
         %orig;
     } else if ([DouXManager liveActionEnabled] && [[DouXManager selectedLiveAction] intValue] == 1) {
@@ -271,6 +274,20 @@
         %orig;
     }
 
+}
+- (void)didMoveToWindow {
+    %orig;
+    if ([DouXManager disableLiveButton]) {
+        self.hidden = YES;
+        self.alpha = 0.0;
+    }
+}
+- (void)layoutSubviews {
+    %orig;
+    if ([DouXManager disableLiveButton]) {
+        self.hidden = YES;
+        self.alpha = 0.0;
+    }
 }
 %end
 
