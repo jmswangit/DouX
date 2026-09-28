@@ -67,7 +67,7 @@
             ]];
         [self.contentView addSubview:likeCountLabel];
         [NSLayoutConstraint activateConstraints:@[
-                [likeCountLabel.topAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.topAnchor constant:109],
+                [likeCountLabel.topAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.topAnchor constant:121],
                 [likeCountLabel.leadingAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.leadingAnchor constant:23],
                 [likeCountLabel.widthAnchor constraintEqualToConstant:200],
                 [likeCountLabel.heightAnchor constraintEqualToConstant:16],
@@ -83,7 +83,7 @@
             ]];
         [self.contentView addSubview:uploadDateLabel];
         [NSLayoutConstraint activateConstraints:@[
-                [uploadDateLabel.topAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.topAnchor constant:127],
+                [uploadDateLabel.topAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.topAnchor constant:139],
                 [uploadDateLabel.leadingAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.leadingAnchor constant:23],
                 [uploadDateLabel.widthAnchor constraintEqualToConstant:200],
                 [uploadDateLabel.heightAnchor constraintEqualToConstant:16],
@@ -106,7 +106,7 @@
 
     NSDate *date = [NSDate dateWithTimeIntervalSince1970:timestamp];
     NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-    dateFormatter.dateFormat = @"MM/dd/yy";
+    dateFormatter.dateFormat = @"M/dd/yy";
     return [dateFormatter stringFromDate:date];
 
 }
