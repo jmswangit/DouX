@@ -23,6 +23,9 @@
 @interface TTKProfileRootView: UIView
 @end
 
+@interface AWELiveFeedEntranceView: UIView
+@end
+
 
 @interface BDImageView: UIImageView
 - (void)handleLongPress:(UILongPressGestureRecognizer *)sender;
