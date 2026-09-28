@@ -18,6 +18,7 @@
 
 static os_log_t tabs_log;
 static NSMutableDictionary *gOrigIMPs;
+static NSMutableString *gReport;
 
 static NSString *dx_stringForKeys(id object, NSArray<NSString *> *keys) {
     for (NSString *key in keys) {
@@ -204,6 +205,7 @@ static void dx_swizzleSelectorEverywhere(SEL sel) {
         method_setImplementation(method, replacement);
 
         os_log_info(tabs_log, "tabs: swizzled %s on %s", sel_getName(sel), class_getName(cls));
+        [gReport appendFormat:@"%s -> %s\n", sel_getName(sel), class_getName(cls)];
     }
 
     free(classes);
@@ -231,45 +233,53 @@ static void dx_swizzleSelectorEverywhere(SEL sel) {
 %ctor {
     tabs_log = os_log_create("com.kunihir0.doux", "Tabs");
     gOrigIMPs = [NSMutableDictionary dictionary];
+    gReport = [NSMutableString string];
 
     if (objc_getClass("AWETabBarPlusButton") != nil) {
         %init(G_PlusButton);
     }
 
+    [gReport appendFormat:@"toggles community=%d local=%d following=%d friends=%d foryou=%d shop=%d plus=%d\n",
+        [DouXManager hideTabCommunity], [DouXManager hideTabLocal], [DouXManager hideTabFollowing],
+        [DouXManager hideTabFriends], [DouXManager hideTabForYou], [DouXManager hideTabShop], [DouXManager hideTabPlus]];
+
     if (!dx_anyTabToggleEnabled()) {
-        return;
+        [gReport appendString:@"no top/tab-bar toggle enabled\n"];
+    } else {
+        static const char *selectors[] = {
+            "setFeedTabModels:",
+            "setTabModels:",
+            "setTabBarItems:",
+            "setTabItems:",
+            "setTabInfos:",
+            "setTabConfigs:",
+            "setTabBarConfigs:",
+            "setTabList:",
+            "setTabsArray:",
+            "setTabConfigsArray:",
+            "setTabInfosArray:",
+            "setTabItemsArrayForTabList:",
+            "setTabListArray:",
+            "configTabbarViewWithTabModels:",
+            "feedTabModels",
+            "tabModels",
+            "tabBarItems",
+            "tabItems",
+            "tabInfos",
+            "tabConfigs",
+            "tabBarConfigs",
+            "tabList",
+            "tabsArray",
+            "tabListArray",
+            "tabItemsArrayForTabList",
+        };
+
+        size_t selectorCount = sizeof(selectors) / sizeof(selectors[0]);
+        for (size_t i = 0; i < selectorCount; i++) {
+            dx_swizzleSelectorEverywhere(sel_registerName(selectors[i]));
+        }
     }
 
-    static const char *selectors[] = {
-        "setFeedTabModels:",
-        "setTabModels:",
-        "setTabBarItems:",
-        "setTabItems:",
-        "setTabInfos:",
-        "setTabConfigs:",
-        "setTabBarConfigs:",
-        "setTabList:",
-        "setTabsArray:",
-        "setTabConfigsArray:",
-        "setTabInfosArray:",
-        "setTabItemsArrayForTabList:",
-        "setTabListArray:",
-        "configTabbarViewWithTabModels:",
-        "feedTabModels",
-        "tabModels",
-        "tabBarItems",
-        "tabItems",
-        "tabInfos",
-        "tabConfigs",
-        "tabBarConfigs",
-        "tabList",
-        "tabsArray",
-        "tabListArray",
-        "tabItemsArrayForTabList",
-    };
-
-    size_t selectorCount = sizeof(selectors) / sizeof(selectors[0]);
-    for (size_t i = 0; i < selectorCount; i++) {
-        dx_swizzleSelectorEverywhere(sel_registerName(selectors[i]));
-    }
+    [[NSUserDefaults standardUserDefaults] setObject:gReport forKey:@"tab_debug_report"];
+    [[NSUserDefaults standardUserDefaults] synchronize];
 }

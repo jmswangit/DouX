@@ -79,7 +79,7 @@
         case 7: return 2;
         case 8: return 1;
         case 9: return 2;
-        case 10: return 2;
+        case 10: return 3;
         case 11: return 2;
         default: return 0;
     }
@@ -187,6 +187,14 @@
         switch (indexPath.row) {
             case 0: return [self createLinkCellWithTitle:@"Kunihir0" Detail:@"Github Page" Image:@"link"];
             case 1: return [self createLinkCellWithTitle:@"FBI" Detail:@"X Page" Image:@"link"];
+            case 2: {
+                UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:nil];
+                cell.textLabel.text = @"Tab Debug Report";
+                cell.detailTextLabel.text = @"Shows which tab hooks were installed";
+                cell.imageView.image = [UIImage systemImageNamed:@"doc.text.magnifyingglass"];
+                cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+                return cell;
+            }
         }
     } else if (indexPath.section == 11) {
         switch (indexPath.row) {
@@ -216,6 +224,17 @@
             [[UIApplication sharedApplication] openURL:[NSURL URLWithString:@"https://github.com/kunihir0"] options:@{} completionHandler:nil];
         } else if (indexPath.row == 1) {
             [[UIApplication sharedApplication] openURL:[NSURL URLWithString:@"https://x.com/FBI"] options:@{} completionHandler:nil];
+        } else if (indexPath.row == 2) {
+            NSString *report = [[NSUserDefaults standardUserDefaults] stringForKey:@"tab_debug_report"];
+            if (report.length == 0) {
+                report = @"(empty - no report stored yet)";
+            }
+            UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Tab Debug Report" message:report preferredStyle:UIAlertControllerStyleAlert];
+            [alert addAction:[UIAlertAction actionWithTitle:@"Copy" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                [UIPasteboard generalPasteboard].string = report;
+            }]];
+            [alert addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:nil]];
+            [self presentViewController:alert animated:YES completion:nil];
         }
     } else if (indexPath.section == 11) {
         if (indexPath.row == 0) {
