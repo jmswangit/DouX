@@ -176,6 +176,10 @@ static os_log_t douxmanager_log;
 + (BOOL)hideSidebarArrow {
     return [[NSUserDefaults standardUserDefaults] boolForKey:@"hide_sidebar_arrow"];
 }
+
++ (BOOL)centerInbox {
+    return [[NSUserDefaults standardUserDefaults] boolForKey:@"center_inbox"];
+}
 + (void)cleanCache {
     NSArray <NSURL *> *DocumentFiles = [[NSFileManager defaultManager] contentsOfDirectoryAtURL:[NSURL fileURLWithPath:NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, true).firstObject] includingPropertiesForKeys:@[] options:NSDirectoryEnumerationSkipsHiddenFiles error:nil];
     

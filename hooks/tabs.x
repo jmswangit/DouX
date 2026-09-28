@@ -437,6 +437,26 @@ static void dx_hideTabBarButtonIfShop(UIView *button) {
     }
 }
 
+static void dx_centerInboxIfNeeded(UIView *button) {
+    if (![DouXManager centerInbox]) {
+        return;
+    }
+    NSString *text = dx_firstTextInView(button);
+    if (text.length == 0 || ![[text lowercaseString] containsString:@"inbox"]) {
+        return;
+    }
+    UIView *bar = button.superview;
+    if (bar == nil || bar.bounds.size.width <= 0) {
+        return;
+    }
+    CGFloat targetX = bar.bounds.size.width / 2.0;
+    if (fabs(button.center.x - targetX) > 0.5) {
+        CGPoint center = button.center;
+        center.x = targetX;
+        button.center = center;
+    }
+}
+
 %group G_PlusButton
 %hook AWETabBarPlusButton
 - (void)didMoveToWindow {
@@ -463,10 +483,12 @@ static void dx_hideTabBarButtonIfShop(UIView *button) {
 - (void)didMoveToWindow {
     %orig;
     dx_hideTabBarButtonIfShop(self);
+    dx_centerInboxIfNeeded(self);
 }
 - (void)layoutSubviews {
     %orig;
     dx_hideTabBarButtonIfShop(self);
+    dx_centerInboxIfNeeded(self);
 }
 %end
 %end

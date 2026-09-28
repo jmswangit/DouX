@@ -72,7 +72,7 @@ extern NSMutableString *DouXTabsDebugReport;
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     switch (section) {
         case 0: return 16;
-        case 1: return 7;
+        case 1: return 8;
         case 2: return 4;
         case 3: return 4;
         case 4: return 2;
@@ -116,6 +116,7 @@ extern NSMutableString *DouXTabsDebugReport;
             case 4: return [self createSwitchCellWithTitle:@"Hide “For You” Tab" Detail:@"Hide the For You top tab" Key:@"hide_tab_foryou"];
             case 5: return [self createSwitchCellWithTitle:@"Hide Shop Tab" Detail:@"Hide the Shop tab on the bottom bar" Key:@"hide_tab_shop"];
             case 6: return [self createSwitchCellWithTitle:@"Hide Upload (+) Button" Detail:@"Hide the + upload button on the bottom bar" Key:@"hide_tab_plus"];
+            case 7: return [self createSwitchCellWithTitle:@"Center Inbox Tab" Detail:@"Move the Inbox tab to the middle of the bottom bar" Key:@"center_inbox"];
         }
     } else if (indexPath.section == 2) {
         switch (indexPath.row) {
