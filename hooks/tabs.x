@@ -408,6 +408,9 @@ static void dx_dumpMethods(const char *className) {
         // bottom tab bar (TTKTabBar*Item)
         "tabBarItems",
         "setTabBarItems:",
+        "visibleTabBarItems",
+        "decisionItemList",
+        "itemSelectModels",
         // feed tab-bar corner items (sidebar arrow)
         "tabCornerItems",
         "placeholderCornerItemTypes",
