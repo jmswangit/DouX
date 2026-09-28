@@ -208,6 +208,25 @@ static id dx_transformReplacement(id self, SEL _cmd, id argument) {
     return ((id (*)(id, SEL, id))orig)(self, _cmd, dx_filterTabList(argument, sel_getName(_cmd)));
 }
 
+// For "add one item" methods (appendWithTabBarItem: / addBarItem:). If the item should be
+// hidden we swallow the call entirely, so the bar never creates its button and the
+// remaining items reflow.
+static void dx_addItemReplacement(id self, SEL _cmd, id argument) {
+    IMP orig = dx_origIMP(object_getClass(self), _cmd);
+    if (orig == NULL) {
+        return;
+    }
+    if ([argument isKindOfClass:[NSArray class]]) {
+        (void)((void (*)(id, SEL, id))orig)(self, _cmd, dx_filterTabList(argument, sel_getName(_cmd)));
+        return;
+    }
+    if (dx_shouldHideTopTab(argument) || dx_shouldHideBottomTab(argument) || dx_shouldHideSidebarItem(argument)) {
+        [DouXTabsDebugReport appendFormat:@"  SKIP_ADD@%s = %s id=%@\n", sel_getName(_cmd), object_getClassName(argument), dx_itemIdentifier(argument)];
+        return;
+    }
+    (void)((void (*)(id, SEL, id))orig)(self, _cmd, argument);
+}
+
 static BOOL dx_anyTabToggleEnabled(void) {
     return [DouXManager hideTabCommunity] || [DouXManager hideTabLocal] || [DouXManager hideTabFollowing] ||
            [DouXManager hideTabFriends] || [DouXManager hideTabForYou] || [DouXManager hideTabShop] || [DouXManager hideTabPlus] ||
@@ -284,6 +303,54 @@ static void dx_swizzleSelectorEverywhere(SEL sel) {
     free(classes);
 }
 
+static void dx_swizzleAddSelectorEverywhere(SEL sel) {
+    int count = objc_getClassList(NULL, 0);
+    if (count <= 0) {
+        return;
+    }
+    Class *classes = (Class *)malloc(sizeof(Class) * (size_t)count);
+    if (classes == NULL) {
+        return;
+    }
+    objc_getClassList(classes, count);
+
+    for (int i = 0; i < count; i++) {
+        Class cls = classes[i];
+        if (strcmp(class_getName(cls), "DouX") == 0) {
+            continue;
+        }
+
+        unsigned int methodCount = 0;
+        Method *methods = class_copyMethodList(cls, &methodCount);
+        BOOL implements = NO;
+        for (unsigned int j = 0; j < methodCount; j++) {
+            if (method_getName(methods[j]) == sel) {
+                implements = YES;
+                break;
+            }
+        }
+        if (methods != NULL) {
+            free(methods);
+        }
+        if (!implements) {
+            continue;
+        }
+
+        Method method = class_getInstanceMethod(cls, sel);
+        if (method == NULL || method_getNumberOfArguments(method) != 3) {
+            continue;
+        }
+
+        IMP original = method_getImplementation(method);
+        NSString *key = [NSString stringWithFormat:@"%s|%s", class_getName(cls), sel_getName(sel)];
+        gOrigIMPs[key] = [NSValue valueWithPointer:original];
+        method_setImplementation(method, (IMP)dx_addItemReplacement);
+        [DouXTabsDebugReport appendFormat:@"swizzled %s -> %s\n", sel_getName(sel), class_getName(cls)];
+    }
+
+    free(classes);
+}
+
 %group G_PlusButton
 %hook AWETabBarPlusButton
 - (void)didMoveToWindow {
@@ -334,6 +401,15 @@ static void dx_swizzleSelectorEverywhere(SEL sel) {
     if (dx_anyTabToggleEnabled()) {
         for (size_t i = 0; i < selectorCount; i++) {
             dx_swizzleSelectorEverywhere(sel_registerName(selectors[i]));
+        }
+
+        static const char *addSelectors[] = {
+            "appendWithTabBarItem:",
+            "addBarItem:",
+        };
+        size_t addSelectorCount = sizeof(addSelectors) / sizeof(addSelectors[0]);
+        for (size_t i = 0; i < addSelectorCount; i++) {
+            dx_swizzleAddSelectorEverywhere(sel_registerName(addSelectors[i]));
         }
     } else {
         [DouXTabsDebugReport appendString:@"no top/tab-bar toggle enabled\n"];
