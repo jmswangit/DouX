@@ -7,29 +7,63 @@
 //
 //  Hide Tako (TikTok's AI assistant).
 //
-//  TikTok builds Tako's entrances (feed bottom-right, search, comment bar, ...) out of
-//  several view classes. Rather than guessing every internal method, we scan the runtime
-//  for every UIView subclass whose class name contains "Tako" (this also catches the
-//  Swift classes such as _TtC14TikTokTakoImpl17TakoEntranceButton) and force those views
-//  to stay hidden. Two UIView hooks are swizzled: -setHidden: (always YES) and
-//  -didMoveToWindow (hide after it joins a window, so it never flashes on screen).
+//  TikTok's internal name for Tako is "TikBot" (e.g. AWEFeedTikBotButton), so matching
+//  only "Tako" misses the feed entrance. We scan the runtime for every UIView subclass
+//  whose class name contains any known Tako/AI-assistant fragment and force those views
+//  invisible (hidden + alpha 0).
 //
 
 static os_log_t hide_tako_log;
 
 static IMP gOrigSetHidden = NULL;
+static IMP gOrigSetAlpha = NULL;
 static IMP gOrigDidMoveToWindow = NULL;
+
+static const char *kTakoNameFragments[] = {
+    "Tako",
+    "TikBot",
+    "AiBot",
+    "AIBot",
+    "AskAI",
+    "AskTako",
+    "AiEntrance",
+    "AIEntrance",
+    "AiAssistant",
+    "AIAssistant",
+};
 
 static void dx_setHidden(id self, SEL _cmd, BOOL hidden) {
     ((void (*)(id, SEL, BOOL))gOrigSetHidden)(self, _cmd, YES);
 }
 
+static void dx_setAlpha(id self, SEL _cmd, CGFloat alpha) {
+    ((void (*)(id, SEL, CGFloat))gOrigSetAlpha)(self, _cmd, 0.0);
+}
+
 static void dx_didMoveToWindow(id self, SEL _cmd) {
     ((void (*)(id, SEL))gOrigDidMoveToWindow)(self, _cmd);
     ((void (*)(id, SEL, BOOL))gOrigSetHidden)(self, @selector(setHidden:), YES);
+    ((void (*)(id, SEL, CGFloat))gOrigSetAlpha)(self, @selector(setAlpha:), 0.0);
 }
 
-static BOOL dx_isUIView(Class cls) {
+static BOOL dx_isTakoView(Class cls) {
+    const char *name = class_getName(cls);
+    if (name == NULL) {
+        return NO;
+    }
+
+    BOOL matched = NO;
+    size_t count = sizeof(kTakoNameFragments) / sizeof(kTakoNameFragments[0]);
+    for (size_t i = 0; i < count; i++) {
+        if (strstr(name, kTakoNameFragments[i]) != NULL) {
+            matched = YES;
+            break;
+        }
+    }
+    if (!matched) {
+        return NO;
+    }
+
     for (Class c = cls; c != Nil; c = class_getSuperclass(c)) {
         if (c == [UIView class]) {
             return YES;
@@ -47,6 +81,13 @@ static void dx_hideClass(Class cls) {
     if (setHiddenMethod != NULL) {
         if (!class_addMethod(cls, @selector(setHidden:), (IMP)dx_setHidden, method_getTypeEncoding(setHiddenMethod))) {
             method_setImplementation(class_getInstanceMethod(cls, @selector(setHidden:)), (IMP)dx_setHidden);
+        }
+    }
+
+    Method setAlphaMethod = class_getInstanceMethod(cls, @selector(setAlpha:));
+    if (setAlphaMethod != NULL) {
+        if (!class_addMethod(cls, @selector(setAlpha:), (IMP)dx_setAlpha, method_getTypeEncoding(setAlphaMethod))) {
+            method_setImplementation(class_getInstanceMethod(cls, @selector(setAlpha:)), (IMP)dx_setAlpha);
         }
     }
 
@@ -74,14 +115,9 @@ static void dx_scanTakoViews(void) {
     objc_getClassList(classes, count);
     for (int i = 0; i < count; i++) {
         Class cls = classes[i];
-        const char *name = class_getName(cls);
-        if (name == NULL || strstr(name, "Tako") == NULL) {
-            continue;
+        if (dx_isTakoView(cls)) {
+            dx_hideClass(cls);
         }
-        if (!dx_isUIView(cls)) {
-            continue;
-        }
-        dx_hideClass(cls);
     }
 
     free(classes);
@@ -95,6 +131,7 @@ static void dx_scanTakoViews(void) {
     hide_tako_log = os_log_create("com.kunihir0.doux", "HideTako");
 
     gOrigSetHidden = class_getMethodImplementation([UIView class], @selector(setHidden:));
+    gOrigSetAlpha = class_getMethodImplementation([UIView class], @selector(setAlpha:));
     gOrigDidMoveToWindow = class_getMethodImplementation([UIView class], @selector(didMoveToWindow));
 
     dx_scanTakoViews();
