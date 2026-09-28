@@ -6,8 +6,8 @@ static NSString *const kDouXSettingsIdentifier = @"doux_settings";
 
 static AWESettingItemModel *dx_makeItemModel(void) {
     AWESettingItemModel *model = [[%c(AWESettingItemModel) alloc] initWithIdentifier:kDouXSettingsIdentifier];
-    [model setTitle:@"DouX settings"];
-    [model setDetail:@"DouX settings"];
+    [model setTitle:@"TokMods Settings"];
+    [model setDetail:@"TokMods Settings"];
     [model setIconImage:[UIImage systemImageNamed:@"gear"]];
     [model setType:99];
     return model;

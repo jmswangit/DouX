@@ -23,7 +23,7 @@ extern NSMutableString *DouXTabsDebugReport;
     [super viewDidLoad];
     self.view.backgroundColor = [UIColor systemBackgroundColor];
     
-    self.title = @"DouX++ Settings";
+    self.title = @"TokMods Settings";
     self.staticTable = [[UITableView alloc] initWithFrame:CGRectZero style:UITableViewStyleGrouped];
     self.staticTable.translatesAutoresizingMaskIntoConstraints = NO;
     [self.view addSubview:self.staticTable];

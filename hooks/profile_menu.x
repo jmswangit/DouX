@@ -122,7 +122,7 @@ static void dx_addFloatingButton(UIView *hostView, UIViewController *hostVC) {
             custom.frame = CGRectMake(0, 0, 32, 32);
             [custom addTarget:target action:@selector(openDouxSettings) forControlEvents:UIControlEventTouchUpInside];
             UIBarButtonItem *item = [[UIBarButtonItem alloc] initWithCustomView:custom];
-            item.accessibilityLabel = @"DouX settings";
+            item.accessibilityLabel = @"TokMods Settings";
             self.navigationItem.rightBarButtonItem = item;
             os_log_info(profile_menu_log, "profileMenu: nav gear added");
         }
