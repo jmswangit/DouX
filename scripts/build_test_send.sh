@@ -8,13 +8,13 @@
 #
 # Defaults:
 #   ipa    = ~/Downloads/com.zhiliaoapp.musically-47.0.0-Decrypted.ipa
-#   device = jacobs-iphone-17-pro-max
+#   device = jacobs-iphone
 #   scheme = rootless
 #
 set -euo pipefail
 
 IPA="${1:-$HOME/Downloads/com.zhiliaoapp.musically-47.0.0-Decrypted.ipa}"
-DEVICE="${2:-jacobs-iphone-17-pro-max}"
+DEVICE="${2:-jacobs-iphone}"
 SCHEME="${3:-rootless}"
 REPO="${DOUX_REPO:-jmswangit/DouX}"
 TS="/Applications/Tailscale.app/Contents/MacOS/Tailscale"
