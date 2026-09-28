@@ -385,25 +385,6 @@ static void dx_dumpMethods(const char *className) {
     }
 }
 
-%group G_PlusButton
-%hook AWETabBarPlusButton
-- (void)didMoveToWindow {
-    %orig;
-    if ([DouXManager hideTabPlus]) {
-        self.hidden = YES;
-        self.alpha = 0.0;
-    }
-}
-- (void)layoutSubviews {
-    %orig;
-    if ([DouXManager hideTabPlus]) {
-        self.hidden = YES;
-        self.alpha = 0.0;
-    }
-}
-%end
-%end
-
 static NSString *dx_firstTextInView(UIView *view) {
     if ([view isKindOfClass:[UILabel class]]) {
         return ((UILabel *)view).text;
@@ -417,6 +398,31 @@ static NSString *dx_firstTextInView(UIView *view) {
     return nil;
 }
 
+static BOOL gBarProbed;
+
+static void dx_probeTabBar(UIView *bar) {
+    if (bar == nil) {
+        return;
+    }
+    if (!gBarProbed) {
+        gBarProbed = YES;
+        [DouXTabsDebugReport appendString:@"\n--- bottom bar subviews ---\n"];
+        for (UIView *sub in bar.subviews) {
+            [DouXTabsDebugReport appendFormat:@"%s text=%@\n", object_getClassName(sub), dx_firstTextInView(sub)];
+        }
+    }
+    if ([DouXManager hideTabShop]) {
+        for (UIView *sub in bar.subviews) {
+            NSString *text = dx_firstTextInView(sub);
+            if (text.length > 0 && [[text lowercaseString] containsString:@"shop"]) {
+                sub.hidden = YES;
+                sub.alpha = 0.0;
+                os_log_info(tabs_log, "tabs: hid shop button %{public}s", object_getClassName(sub));
+            }
+        }
+    }
+}
+
 static void dx_hideTabBarButtonIfShop(UIView *button) {
     if (![DouXManager hideTabShop]) {
         return;
@@ -427,6 +433,27 @@ static void dx_hideTabBarButtonIfShop(UIView *button) {
         button.alpha = 0.0;
     }
 }
+
+%group G_PlusButton
+%hook AWETabBarPlusButton
+- (void)didMoveToWindow {
+    %orig;
+    if ([DouXManager hideTabPlus]) {
+        self.hidden = YES;
+        self.alpha = 0.0;
+    }
+    dx_probeTabBar(self.superview);
+}
+- (void)layoutSubviews {
+    %orig;
+    if ([DouXManager hideTabPlus]) {
+        self.hidden = YES;
+        self.alpha = 0.0;
+    }
+    dx_probeTabBar(self.superview);
+}
+%end
+%end
 
 %group G_TabBarButton
 %hook AWETabBarButton
