@@ -5,12 +5,12 @@
 #import <string.h>
 
 //
-//  Top feed tabs and bottom tab bar toggles.
+//  Top feed tabs (TTKFeedTopTabItemInfo) and bottom tab bar (TikTokTabBarImpl.
+//  TTKTabBarItemsManager) toggles.
 //
-//  Rather than guessing which class owns the tab list (they differ per build), we swizzle
-//  every class that implements a known tab-list getter/setter at load, and filter the
-//  returned/incoming array. Top tabs are matched by feedTabID / title; bottom items by
-//  their TTKTabBar*Item class name (TTKTabBarMallItem = Shop, TTKTabBarShootItem = +).
+//  We swizzle every class that implements a known tab-list getter/setter and filter the
+//  array. Matching uses both an id (KVC) and a title/name. A debug report records which
+//  selectors/classes were hooked and which item classes were seen.
 //
 
 @interface AWETabBarPlusButton : UIButton
@@ -19,6 +19,7 @@
 static os_log_t tabs_log;
 static NSMutableDictionary *gOrigIMPs;
 static NSMutableString *gReport;
+static NSMutableSet *gSeenItemClasses;
 
 static NSString *dx_stringForKeys(id object, NSArray<NSString *> *keys) {
     for (NSString *key in keys) {
@@ -31,71 +32,104 @@ static NSString *dx_stringForKeys(id object, NSArray<NSString *> *keys) {
                 return [value stringValue];
             }
         } @catch (NSException *exception) {
-            // ignore unknown keys
         }
     }
     return nil;
 }
 
+static NSString *dx_itemIdentifier(id item) {
+    return dx_stringForKeys(item, @[@"feedTabID", @"tabID", @"tabId", @"identifier", @"barItemID", @"barItemId", @"tabKey", @"itemType", @"tabType", @"pageName", @"key", @"type"]);
+}
+
+static NSString *dx_itemTitle(id item) {
+    return dx_stringForKeys(item, @[@"title", @"tabTitle", @"tabName", @"name", @"displayName", @"text"]);
+}
+
+static BOOL dx_match(NSString *value, NSArray<NSString *> *tokens) {
+    if (![value isKindOfClass:[NSString class]] || value.length == 0) {
+        return NO;
+    }
+    NSString *lower = value.lowercaseString;
+    for (NSString *token in tokens) {
+        if ([lower isEqualToString:token] || [lower containsString:token]) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
 static BOOL dx_shouldHideTopTab(id item) {
-    NSString *identifier = dx_stringForKeys(item, @[@"feedTabID", @"tabID", @"tabId", @"identifier", @"itemType", @"pageName", @"tabType"]);
-    NSString *title = dx_stringForKeys(item, @[@"title", @"tabTitle", @"tabName", @"name", @"text"]);
-    NSString *ident = identifier.lowercaseString ?: @"";
-    NSString *name = title.lowercaseString ?: @"";
+    NSString *ident = dx_itemIdentifier(item);
+    NSString *title = dx_itemTitle(item);
 
     if ([DouXManager hideTabForYou] &&
-        ([ident isEqualToString:@"homepage_hot"] || [ident isEqualToString:@"homepage_foryou"] || [ident containsString:@"foryou"] || [name containsString:@"for you"])) {
+        (dx_match(ident, @[@"homepage_hot", @"for_you", @"foryou", @"for you"]) || dx_match(title, @[@"for you"]))) {
         return YES;
     }
     if ([DouXManager hideTabFollowing] &&
-        ([ident isEqualToString:@"homepage_follow"] || [ident isEqualToString:@"homepage_following"] || [name containsString:@"following"])) {
+        (dx_match(ident, @[@"homepage_follow", @"following", @"follow"]) || dx_match(title, @[@"following"]))) {
         return YES;
     }
     if ([DouXManager hideTabFriends] &&
-        ([ident isEqualToString:@"homepage_friends"] || [name containsString:@"friends"])) {
+        (dx_match(ident, @[@"homepage_friends", @"friends", @"friend"]) || dx_match(title, @[@"friends"]))) {
         return YES;
     }
     if ([DouXManager hideTabLocal] &&
-        ([ident isEqualToString:@"homepage_nearby"] || [ident isEqualToString:@"homepage_local"] || [name isEqualToString:@"local"] || [name isEqualToString:@"nearby"])) {
+        (dx_match(ident, @[@"homepage_nearby", @"homepage_local", @"nearby", @"local"]) || dx_match(title, @[@"local", @"nearby"]))) {
         return YES;
     }
     if ([DouXManager hideTabCommunity] &&
-        ([ident isEqualToString:@"homepage_community"] || [name containsString:@"community"])) {
+        (dx_match(ident, @[@"homepage_community", @"community"]) || dx_match(title, @[@"community"]))) {
         return YES;
     }
     return NO;
 }
 
 static BOOL dx_shouldHideBottomTab(id item) {
+    NSString *ident = dx_itemIdentifier(item);
+    NSString *title = dx_itemTitle(item);
     const char *className = object_getClassName(item);
-    if (className == NULL) {
-        return NO;
-    }
-    NSString *cls = [NSString stringWithUTF8String:className];
+    NSString *cls = className != NULL ? [NSString stringWithUTF8String:className] : @"";
 
-    if ([DouXManager hideTabShop] && ([cls containsString:@"Mall"] || [cls containsString:@"Shop"])) {
+    if ([DouXManager hideTabShop] &&
+        (dx_match(cls, @[@"Mall", @"Shop"]) || dx_match(ident, @[@"mall", @"shop"]) || dx_match(title, @[@"shop", @"mall"]))) {
         return YES;
     }
-    if ([DouXManager hideTabPlus] && ([cls containsString:@"Shoot"] || [cls containsString:@"Plus"] || [cls containsString:@"Upload"] || [cls containsString:@"Create"])) {
+    if ([DouXManager hideTabPlus] &&
+        (dx_match(cls, @[@"Shoot", @"Plus", @"Upload", @"Create"]) || dx_match(ident, @[@"shoot", @"plus", @"upload", @"create"]) || dx_match(title, @[@"upload", @"create"]))) {
         return YES;
     }
     return NO;
 }
 
-static NSArray *dx_filterTabList(NSArray *items) {
+static NSArray *dx_filterTabList(NSArray *items, const char *selectorName) {
     if (![items isKindOfClass:[NSArray class]] || items.count == 0) {
         return items;
     }
 
-    NSMutableArray *kept = [NSMutableArray arrayWithCapacity:items.count];
-    for (id item in items) {
+    NSMutableArray *kept = nil;
+    for (NSUInteger index = 0; index < items.count; index++) {
+        id item = items[index];
+        const char *itemClassName = object_getClassName(item);
+        if (itemClassName != NULL) {
+            NSString *seen = [NSString stringWithFormat:@"%s|%s", selectorName, itemClassName];
+            if (![gSeenItemClasses containsObject:seen] && gSeenItemClasses.count < 200) {
+                [gSeenItemClasses addObject:seen];
+                [gReport appendFormat:@"  item@%s = %s\n", selectorName, itemClassName];
+            }
+        }
+
         if (dx_shouldHideTopTab(item) || dx_shouldHideBottomTab(item)) {
-            os_log_info(tabs_log, "tabs: dropped %{public}s", object_getClassName(item));
-        } else {
+            os_log_info(tabs_log, "tabs: dropped %{public}s", itemClassName);
+            [gReport appendFormat:@"  DROPPED@%s = %s (id=%@ title=%@)\n", selectorName, itemClassName, dx_itemIdentifier(item), dx_itemTitle(item)];
+            if (kept == nil) {
+                kept = [NSMutableArray arrayWithArray:[items subarrayWithRange:NSMakeRange(0, index)]];
+            }
+        } else if (kept != nil) {
             [kept addObject:item];
         }
     }
-    return kept;
+    return kept != nil ? kept : items;
 }
 
 static IMP dx_origIMP(Class cls, SEL sel) {
@@ -114,7 +148,7 @@ static void dx_setterReplacement(id self, SEL _cmd, id argument) {
     if (orig == NULL) {
         return;
     }
-    (void)((void (*)(id, SEL, id))orig)(self, _cmd, dx_filterTabList(argument));
+    (void)((void (*)(id, SEL, id))orig)(self, _cmd, dx_filterTabList(argument, sel_getName(_cmd)));
 }
 
 static id dx_getterReplacement(id self, SEL _cmd) {
@@ -124,7 +158,7 @@ static id dx_getterReplacement(id self, SEL _cmd) {
     }
     id result = ((id (*)(id, SEL))orig)(self, _cmd);
     if ([result isKindOfClass:[NSArray class]]) {
-        return dx_filterTabList(result);
+        return dx_filterTabList(result, sel_getName(_cmd));
     }
     return result;
 }
@@ -134,7 +168,7 @@ static id dx_transformReplacement(id self, SEL _cmd, id argument) {
     if (orig == NULL) {
         return nil;
     }
-    return ((id (*)(id, SEL, id))orig)(self, _cmd, dx_filterTabList(argument));
+    return ((id (*)(id, SEL, id))orig)(self, _cmd, dx_filterTabList(argument, sel_getName(_cmd)));
 }
 
 static BOOL dx_anyTabToggleEnabled(void) {
@@ -155,6 +189,9 @@ static void dx_swizzleSelectorEverywhere(SEL sel) {
 
     for (int i = 0; i < count; i++) {
         Class cls = classes[i];
+        if (strcmp(class_getName(cls), "DouX") == 0) {
+            continue;
+        }
 
         unsigned int methodCount = 0;
         Method *methods = class_copyMethodList(cls, &methodCount);
@@ -203,9 +240,7 @@ static void dx_swizzleSelectorEverywhere(SEL sel) {
         NSString *key = [NSString stringWithFormat:@"%s|%s", class_getName(cls), sel_getName(sel)];
         gOrigIMPs[key] = [NSValue valueWithPointer:original];
         method_setImplementation(method, replacement);
-
-        os_log_info(tabs_log, "tabs: swizzled %s on %s", sel_getName(sel), class_getName(cls));
-        [gReport appendFormat:@"%s -> %s\n", sel_getName(sel), class_getName(cls)];
+        [gReport appendFormat:@"swizzled %s -> %s\n", sel_getName(sel), class_getName(cls)];
     }
 
     free(classes);
@@ -234,6 +269,7 @@ static void dx_swizzleSelectorEverywhere(SEL sel) {
     tabs_log = os_log_create("com.kunihir0.doux", "Tabs");
     gOrigIMPs = [NSMutableDictionary dictionary];
     gReport = [NSMutableString string];
+    gSeenItemClasses = [NSMutableSet set];
 
     if (objc_getClass("AWETabBarPlusButton") != nil) {
         %init(G_PlusButton);
@@ -243,41 +279,43 @@ static void dx_swizzleSelectorEverywhere(SEL sel) {
         [DouXManager hideTabCommunity], [DouXManager hideTabLocal], [DouXManager hideTabFollowing],
         [DouXManager hideTabFriends], [DouXManager hideTabForYou], [DouXManager hideTabShop], [DouXManager hideTabPlus]];
 
-    if (!dx_anyTabToggleEnabled()) {
-        [gReport appendString:@"no top/tab-bar toggle enabled\n"];
-    } else {
-        static const char *selectors[] = {
-            "setFeedTabModels:",
-            "setTabModels:",
-            "setTabBarItems:",
-            "setTabItems:",
-            "setTabInfos:",
-            "setTabConfigs:",
-            "setTabBarConfigs:",
-            "setTabList:",
-            "setTabsArray:",
-            "setTabConfigsArray:",
-            "setTabInfosArray:",
-            "setTabItemsArrayForTabList:",
-            "setTabListArray:",
-            "configTabbarViewWithTabModels:",
-            "feedTabModels",
-            "tabModels",
-            "tabBarItems",
-            "tabItems",
-            "tabInfos",
-            "tabConfigs",
-            "tabBarConfigs",
-            "tabList",
-            "tabsArray",
-            "tabListArray",
-            "tabItemsArrayForTabList",
-        };
+    static const char *selectors[] = {
+        // top feed tabs
+        "topTabs",
+        "setTopTabs:",
+        "topTabList",
+        "setTopTabList:",
+        "toptabItems",
+        "setToptabItems:",
+        "candidateTopTabs",
+        "finalTopTabs",
+        "enteredTopTabs",
+        "feedTabModels",
+        "setFeedTabModels:",
+        // bottom tab bar
+        "barItems",
+        "setBarItems:",
+        "tabBarItems",
+        "setTabBarItems:",
+        "allTabbarItemCandidates",
+        // generic tab lists
+        "tabModels",
+        "setTabModels:",
+        "tabItems",
+        "setTabItems:",
+        "tabInfos",
+        "setTabInfos:",
+        "tabConfigs",
+        "setTabConfigs:",
+    };
 
-        size_t selectorCount = sizeof(selectors) / sizeof(selectors[0]);
+    size_t selectorCount = sizeof(selectors) / sizeof(selectors[0]);
+    if (dx_anyTabToggleEnabled()) {
         for (size_t i = 0; i < selectorCount; i++) {
             dx_swizzleSelectorEverywhere(sel_registerName(selectors[i]));
         }
+    } else {
+        [gReport appendString:@"no top/tab-bar toggle enabled\n"];
     }
 
     [[NSUserDefaults standardUserDefaults] setObject:gReport forKey:@"tab_debug_report"];
