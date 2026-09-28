@@ -576,10 +576,9 @@ static void dx_evenOutTabBar(UIView *bar) {
         [DouXTabsDebugReport appendString:@"no top/tab-bar toggle enabled\n"];
     }
 
-    dx_dumpMethods("AWEPlayInteractionAnchorElement");
-    dx_dumpMethods("TTKFeedSearchRSBannerElement");
-    dx_dumpMethods("TTKECFeedSearchRSBannerElement");
-    dx_dumpMethods("AWEPlayInteractionAuthorView");
+    dx_dumpMethods("TTKNoticeUnreadCountManager");
+    dx_dumpMethods("TTKNoticeUnreadCountModel");
+    dx_dumpMethods("TTKNoticeUnreadCountHelper");
 
     [[NSUserDefaults standardUserDefaults] setObject:DouXTabsDebugReport forKey:@"tab_debug_report"];
     [[NSUserDefaults standardUserDefaults] synchronize];
