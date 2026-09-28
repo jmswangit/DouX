@@ -78,7 +78,7 @@ static void dx_openDouxSettings(void) {
 // assignment so it survives reloads.
 //
 - (void)setModelsArray:(NSArray *)modelsArray {
-    if ([self.sectionIdentifier isEqualToString:@"account"] && ![dx_arrayHasDouxPlugin(modelsArray)]) {
+    if ([self.sectionIdentifier isEqualToString:@"account"] && !dx_arrayHasDouxPlugin(modelsArray)) {
         TTKSettingsBaseCellPlugin *plugin = dx_makePlugin(self.context);
         if (plugin != nil) {
             NSMutableArray *updated = modelsArray != nil ? [modelsArray mutableCopy] : [NSMutableArray array];
