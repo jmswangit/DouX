@@ -19,6 +19,9 @@
 @interface AWETabBarButton : UIView
 @end
 
+@interface TTKTabBarButton : UIView
+@end
+
 static os_log_t tabs_log;
 static NSMutableDictionary *gOrigIMPs;
 NSMutableString *DouXTabsDebugReport;
@@ -456,7 +459,7 @@ static void dx_hideTabBarButtonIfShop(UIView *button) {
 %end
 
 %group G_TabBarButton
-%hook AWETabBarButton
+%hook TTKTabBarButton
 - (void)didMoveToWindow {
     %orig;
     dx_hideTabBarButtonIfShop(self);
@@ -477,7 +480,7 @@ static void dx_hideTabBarButtonIfShop(UIView *button) {
     if (objc_getClass("AWETabBarPlusButton") != nil) {
         %init(G_PlusButton);
     }
-    if (objc_getClass("AWETabBarButton") != nil) {
+    if (objc_getClass("TTKTabBarButton") != nil) {
         %init(G_TabBarButton);
     }
 
