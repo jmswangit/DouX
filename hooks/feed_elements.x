@@ -60,6 +60,10 @@ static void dx_probeRSBannerContainer(id element) {
         Ivar *ivars = class_copyIvarList(cls, &count);
         for (unsigned int i = 0; i < count; i++) {
             Ivar ivar = ivars[i];
+            const char *typeEncoding = ivar_getTypeEncoding(ivar);
+            if (typeEncoding == NULL || typeEncoding[0] != '@') {
+                continue;
+            }
             id value = nil;
             @try {
                 value = object_getIvar(element, ivar);
