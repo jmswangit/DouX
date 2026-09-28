@@ -129,6 +129,7 @@ static NSArray *dx_filterTabList(NSArray *items) {
 %end
 %end
 
+%group G_PlusButton
 %hook AWETabBarPlusButton
 - (void)didMoveToWindow {
     %orig;
@@ -145,6 +146,7 @@ static NSArray *dx_filterTabList(NSArray *items) {
     }
 }
 %end
+%end
 
 %ctor {
     tabs_log = os_log_create("com.kunihir0.doux", "Tabs");
@@ -160,5 +162,8 @@ static NSArray *dx_filterTabList(NSArray *items) {
     }
     if (objc_getClass("TTKTabBarManager") != nil) {
         %init(G_TTKTabBarManager);
+    }
+    if (objc_getClass("AWETabBarPlusButton") != nil) {
+        %init(G_PlusButton);
     }
 }
