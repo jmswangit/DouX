@@ -62,6 +62,47 @@ static void dx_logOnce(NSString *key, NSString *line) {
     return count;
 }
 
+- (NSInteger)unreadCountOfFilter:(NSInteger)filter {
+    NSInteger count = %orig;
+    if (count > 0) {
+        dx_logOnce([NSString stringWithFormat:@"f:%ld", (long)filter],
+                   [NSString stringWithFormat:@"unreadFilter %ld = %ld", (long)filter, (long)count]);
+    }
+    return count;
+}
+
+- (NSInteger)unreadCountWithShowTypeNumOfFilter:(NSInteger)filter {
+    NSInteger count = %orig;
+    if (count > 0) {
+        dx_logOnce([NSString stringWithFormat:@"fs:%ld", (long)filter],
+                   [NSString stringWithFormat:@"unreadFilterShow %ld = %ld", (long)filter, (long)count]);
+    }
+    return count;
+}
+
+- (NSInteger)unreadCountOnlyShowTypeRedDotOfFilter:(NSInteger)filter {
+    NSInteger count = %orig;
+    if (count > 0) {
+        dx_logOnce([NSString stringWithFormat:@"fr:%ld", (long)filter],
+                   [NSString stringWithFormat:@"unreadFilterRedDot %ld = %ld", (long)filter, (long)count]);
+    }
+    return count;
+}
+
+- (id)unreadData:(unsigned long long)arg {
+    id result = %orig;
+    dx_logOnce([NSString stringWithFormat:@"u:%llu", arg],
+               [NSString stringWithFormat:@"unreadData %llu = %@", arg, result]);
+    return result;
+}
+
+- (id)unreadData:(unsigned long long)arg context:(id)context {
+    id result = %orig;
+    dx_logOnce([NSString stringWithFormat:@"uc:%llu", arg],
+               [NSString stringWithFormat:@"unreadDataCtx %llu = %@", arg, result]);
+    return result;
+}
+
 %end
 %end
 
