@@ -381,7 +381,7 @@ static void dx_dumpMethods(const char *className) {
     Method *methods = class_copyMethodList(cls, &count);
     [DouXTabsDebugReport appendFormat:@"\n--- methods of %s ---\n", className];
     for (unsigned int i = 0; i < count; i++) {
-        [DouXTabsDebugReport appendFormat:@"%s\n", sel_getName(method_getName(methods[i]))];
+        [DouXTabsDebugReport appendFormat:@"%s %s\n", sel_getName(method_getName(methods[i])), method_getTypeEncoding(methods[i])];
     }
     if (methods != NULL) {
         free(methods);
