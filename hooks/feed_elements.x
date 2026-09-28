@@ -5,98 +5,101 @@
 
 //
 //  Hide feed "play interaction" elements:
-//   - the anchor link above the creator's username (shop / location / TV show)
-//   - the suggested-search (related search) banner at the bottom of a video
+//   - the anchor link above the creator's username (shop / location / TV show):
+//     AWEPlayInteractionAnchorElement exposes shouldShowAnchorView (force NO) and a
+//     childView holding the rendered anchor.
+//   - the suggested-search / related-search bar at the bottom of a video:
+//     TTKFeedSearchRSBannerElement owns the trendingBarView and a
+//     hideSearchRSBannerDueToVirtualSignal flag.
 //
-//  Both are AWEPlayInteraction / TTKFeed*Element views; we hide the element view itself
-//  when it joins a window. The isKindOfClass guard keeps it safe if a given element isn't
-//  actually a UIView.
+//  These are components, not plain views, so we drive their own show/hide API (with KVC
+//  to their view properties).
 //
 
-@interface AWEPlayInteractionAnchorElement : UIView
+@interface AWEPlayInteractionAnchorElement : NSObject
 @end
 
-@interface TTKFeedSearchRSBannerElement : UIView
+@interface TTKFeedSearchRSBannerElement : NSObject
 @end
 
-@interface TTKECFeedSearchRSBannerElement : UIView
-@end
-
-@interface TTKPlayPhotoAlbumFullPageSuggestedSearchElement : UIView
+@interface TTKECFeedSearchRSBannerElement : NSObject
 @end
 
 static os_log_t feed_elements_log;
 
-static void dx_applyHidden(UIView *view, BOOL shouldHide) {
-    if (view == nil || ![view isKindOfClass:[UIView class]]) {
-        return;
-    }
-    if (shouldHide) {
-        view.hidden = YES;
-        view.alpha = 0.0;
-    }
-}
-
-static void dx_hideAnchorElement(UIView *view) {
-    if ([DouXManager hideAnchorLink]) {
-        dx_applyHidden(view, YES);
+static void dx_hideValueView(id object, NSString *key) {
+    @try {
+        id view = [object valueForKey:key];
+        if ([view isKindOfClass:[UIView class]]) {
+            ((UIView *)view).hidden = YES;
+            ((UIView *)view).alpha = 0.0;
+        }
+    } @catch (NSException *exception) {
     }
 }
 
-static void dx_hideSearchElement(UIView *view) {
-    if ([DouXManager hideSearchSuggestion]) {
-        dx_applyHidden(view, YES);
+static void dx_setBoolValue(id object, NSString *key, BOOL value) {
+    @try {
+        [object setValue:@(value) forKey:key];
+    } @catch (NSException *exception) {
     }
 }
 
 %group G_AnchorElement
 %hook AWEPlayInteractionAnchorElement
-- (void)didMoveToWindow {
-    %orig;
-    dx_hideAnchorElement(self);
+- (BOOL)shouldShowAnchorView {
+    if ([DouXManager hideAnchorLink]) {
+        return NO;
+    }
+    return %orig;
 }
-- (void)layoutSubviews {
+- (BOOL)shouldShowAnchorViewWithoutCondition {
+    if ([DouXManager hideAnchorLink]) {
+        return NO;
+    }
+    return %orig;
+}
+- (void)componentViewDidLoad {
     %orig;
-    dx_hideAnchorElement(self);
+    if ([DouXManager hideAnchorLink]) {
+        dx_hideValueView(self, @"childView");
+    }
+}
+- (void)mountStateDidUpdate {
+    %orig;
+    if ([DouXManager hideAnchorLink]) {
+        dx_hideValueView(self, @"childView");
+    }
 }
 %end
 %end
 
 %group G_RSBanner
 %hook TTKFeedSearchRSBannerElement
-- (void)didMoveToWindow {
+- (void)componentViewDidLoad {
     %orig;
-    dx_hideSearchElement(self);
+    if ([DouXManager hideSearchSuggestion]) {
+        dx_hideValueView(self, @"trendingBarView");
+        dx_setBoolValue(self, @"hideSearchRSBannerDueToVirtualSignal", YES);
+    }
 }
-- (void)layoutSubviews {
+- (void)containerWillDisplay {
     %orig;
-    dx_hideSearchElement(self);
+    if ([DouXManager hideSearchSuggestion]) {
+        dx_hideValueView(self, @"trendingBarView");
+        dx_setBoolValue(self, @"hideSearchRSBannerDueToVirtualSignal", YES);
+    }
 }
 %end
 %end
 
 %group G_RSBannerEC
 %hook TTKECFeedSearchRSBannerElement
-- (void)didMoveToWindow {
+- (void)mountStateDidUpdate {
     %orig;
-    dx_hideSearchElement(self);
-}
-- (void)layoutSubviews {
-    %orig;
-    dx_hideSearchElement(self);
-}
-%end
-%end
-
-%group G_PhotoAlbumSuggestedSearch
-%hook TTKPlayPhotoAlbumFullPageSuggestedSearchElement
-- (void)didMoveToWindow {
-    %orig;
-    dx_hideSearchElement(self);
-}
-- (void)layoutSubviews {
-    %orig;
-    dx_hideSearchElement(self);
+    if ([DouXManager hideSearchSuggestion]) {
+        dx_setBoolValue(self, @"isShow", NO);
+    }
 }
 %end
 %end
@@ -112,8 +115,5 @@ static void dx_hideSearchElement(UIView *view) {
     }
     if (objc_getClass("TTKECFeedSearchRSBannerElement") != nil) {
         %init(G_RSBannerEC);
-    }
-    if (objc_getClass("TTKPlayPhotoAlbumFullPageSuggestedSearchElement") != nil) {
-        %init(G_PhotoAlbumSuggestedSearch);
     }
 }
