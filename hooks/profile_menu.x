@@ -14,22 +14,85 @@
 //  floating gear in the top-right corner of the menu panel.
 //
 
+@interface TTKProfileMenuViewController : UIViewController
+@end
+
+@interface DXMenuActionTarget : NSObject
+@property (nonatomic, weak) UIViewController *host;
+@property (nonatomic, strong) UIViewController *presented;
+- (void)openDouxSettings;
+- (void)dismissDouxSettings;
+@end
+
 static os_log_t profile_menu_log;
 static const void *kDouXMenuButtonKey = &kDouXMenuButtonKey;
+static const void *kDouXTargetKey = &kDouXTargetKey;
 
-static void dx_presentDouxSettings(UIViewController *from) {
+@implementation DXMenuActionTarget
+
+- (void)openDouxSettings {
+    UIViewController *host = self.host;
+    if (host == nil) {
+        return;
+    }
+
     ViewController *settings = [[ViewController alloc] init];
-
     UIBarButtonItem *done = [[UIBarButtonItem alloc]
         initWithBarButtonSystemItem:UIBarButtonSystemItemDone
-        primaryAction:[UIAction actionWithHandler:^(UIAction *action) {
-            [from dismissViewControllerAnimated:YES completion:nil];
-        }]];
+        target:self
+        action:@selector(dismissDouxSettings)];
     settings.navigationItem.rightBarButtonItem = done;
 
     UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:settings];
     nav.modalPresentationStyle = UIModalPresentationPageSheet;
-    [from presentViewController:nav animated:YES completion:nil];
+    self.presented = nav;
+    [host presentViewController:nav animated:YES completion:nil];
+}
+
+- (void)dismissDouxSettings {
+    [self.host dismissViewControllerAnimated:YES completion:nil];
+    self.presented = nil;
+}
+
+@end
+
+static UIBarButtonItem *dx_makeMenuBarButton(UIViewController *host) {
+    DXMenuActionTarget *target = [DXMenuActionTarget new];
+    target.host = host;
+
+    UIButton *button = [UIButton buttonWithType:UIButtonTypeSystem];
+    [button setImage:[UIImage systemImageNamed:@"gearshape.fill"] forState:UIControlStateNormal];
+    button.frame = CGRectMake(0, 0, 32, 32);
+    [button addTarget:target action:@selector(openDouxSettings) forControlEvents:UIControlEventTouchUpInside];
+    objc_setAssociatedObject(button, kDouXTargetKey, target, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+
+    UIBarButtonItem *item = [[UIBarButtonItem alloc] initWithCustomView:button];
+    item.accessibilityLabel = @"DouX settings";
+    return item;
+}
+
+static void dx_addFloatingMenuButton(UIViewController *host) {
+    DXMenuActionTarget *target = [DXMenuActionTarget new];
+    target.host = host;
+
+    UIButton *button = [UIButton buttonWithType:UIButtonTypeSystem];
+    [button setImage:[UIImage systemImageNamed:@"gearshape.fill"] forState:UIControlStateNormal];
+    button.tintColor = [UIColor labelColor];
+    button.backgroundColor = [UIColor colorWithWhite:0.5 alpha:0.25];
+    button.layer.cornerRadius = 18.0;
+    button.translatesAutoresizingMaskIntoConstraints = NO;
+    [button addTarget:target action:@selector(openDouxSettings) forControlEvents:UIControlEventTouchUpInside];
+    objc_setAssociatedObject(button, kDouXTargetKey, target, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+
+    UIView *container = host.view;
+    [container addSubview:button];
+    [NSLayoutConstraint activateConstraints:@[
+        [button.topAnchor constraintEqualToAnchor:container.safeAreaLayoutGuide.topAnchor constant:8.0],
+        [button.trailingAnchor constraintEqualToAnchor:container.trailingAnchor constant:-12.0],
+        [button.widthAnchor constraintEqualToConstant:36.0],
+        [button.heightAnchor constraintEqualToConstant:36.0]
+    ]];
+    objc_setAssociatedObject(container, kDouXMenuButtonKey, button, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 }
 
 %hook TTKProfileMenuViewController
@@ -37,41 +100,12 @@ static void dx_presentDouxSettings(UIViewController *from) {
 - (void)viewDidLoad {
     %orig;
 
-    if (objc_getAssociatedObject(self, kDouXMenuButtonKey) != nil) {
-        return;
-    }
-
-    UIImage *icon = [UIImage systemImageNamed:@"gearshape.fill"];
-
     if (self.navigationController != nil) {
-        UIBarButtonItem *item = [[UIBarButtonItem alloc]
-            initWithImage:icon
-            primaryAction:[UIAction actionWithHandler:^(UIAction *action) {
-                dx_presentDouxSettings(self);
-            }]];
-        item.accessibilityLabel = @"DouX settings";
-        self.navigationItem.rightBarButtonItem = item;
-        objc_setAssociatedObject(self, kDouXMenuButtonKey, item, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-    } else {
-        UIButton *button = [UIButton buttonWithType:UIButtonTypeSystem];
-        [button setImage:icon forState:UIControlStateNormal];
-        button.tintColor = [UIColor labelColor];
-        button.backgroundColor = [UIColor colorWithWhite:0.5 alpha:0.25];
-        button.layer.cornerRadius = 18.0;
-        button.translatesAutoresizingMaskIntoConstraints = NO;
-        [button addAction:[UIAction actionWithHandler:^(UIAction *action) {
-            dx_presentDouxSettings(self);
-        }] forControlEvents:UIControlEventTouchUpInside];
-
-        UIView *host = self.view;
-        [host addSubview:button];
-        [NSLayoutConstraint activateConstraints:@[
-            [button.topAnchor constraintEqualToAnchor:host.safeAreaLayoutGuide.topAnchor constant:8.0],
-            [button.trailingAnchor constraintEqualToAnchor:host.trailingAnchor constant:-12.0],
-            [button.widthAnchor constraintEqualToConstant:36.0],
-            [button.heightAnchor constraintEqualToConstant:36.0]
-        ]];
-        objc_setAssociatedObject(self, kDouXMenuButtonKey, button, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        if (self.navigationItem.rightBarButtonItem == nil) {
+            self.navigationItem.rightBarButtonItem = dx_makeMenuBarButton(self);
+        }
+    } else if (objc_getAssociatedObject(self, kDouXMenuButtonKey) == nil) {
+        dx_addFloatingMenuButton(self);
     }
 
     os_log_info(profile_menu_log, "profileMenu: DouX entry added");
