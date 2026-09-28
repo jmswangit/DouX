@@ -137,10 +137,6 @@ static os_log_t douxmanager_log;
     return [[NSUserDefaults standardUserDefaults] boolForKey:@"hide_tako"];
 }
 
-+ (BOOL)hideCommentLikeNotices {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:@"hide_comment_like_notices"];
-}
-
 + (BOOL)disableLiveButton {
     return [[NSUserDefaults standardUserDefaults] boolForKey:@"disable_live_button"];
 }
@@ -189,9 +185,6 @@ static os_log_t douxmanager_log;
     return [[NSUserDefaults standardUserDefaults] boolForKey:@"hide_search_suggestion"];
 }
 
-+ (BOOL)inboxBadgeDmsOnly {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:@"inbox_badge_dms_only"];
-}
 + (void)cleanCache {
     NSArray <NSURL *> *DocumentFiles = [[NSFileManager defaultManager] contentsOfDirectoryAtURL:[NSURL fileURLWithPath:NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, true).firstObject] includingPropertiesForKeys:@[] options:NSDirectoryEnumerationSkipsHiddenFiles error:nil];
     

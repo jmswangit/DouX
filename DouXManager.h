@@ -44,7 +44,6 @@
 + (BOOL)flexEnabled;
 + (BOOL)showVaultButton;
 + (BOOL)hideTako;
-+ (BOOL)hideCommentLikeNotices;
 + (BOOL)disableLiveButton;
 + (BOOL)hideTabCommunity;
 + (BOOL)hideTabLocal;
@@ -57,7 +56,6 @@
 + (BOOL)evenOutTabs;
 + (BOOL)hideAnchorLink;
 + (BOOL)hideSearchSuggestion;
-+ (BOOL)inboxBadgeDmsOnly;
 + (void)showSaveVC:(NSArray<NSURL *> *)item;
 + (void)cleanCache;
 + (BOOL)isEmpty:(NSURL *)url;

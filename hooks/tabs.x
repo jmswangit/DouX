@@ -371,23 +371,6 @@ static void dx_swizzleAddSelectorEverywhere(SEL sel) {
     free(classes);
 }
 
-static void dx_dumpMethods(const char *className) {
-    Class cls = objc_getClass(className);
-    if (cls == Nil) {
-        [DouXTabsDebugReport appendFormat:@"\n(no class %s)\n", className];
-        return;
-    }
-    unsigned int count = 0;
-    Method *methods = class_copyMethodList(cls, &count);
-    [DouXTabsDebugReport appendFormat:@"\n--- methods of %s ---\n", className];
-    for (unsigned int i = 0; i < count; i++) {
-        [DouXTabsDebugReport appendFormat:@"%s %s\n", sel_getName(method_getName(methods[i])), method_getTypeEncoding(methods[i])];
-    }
-    if (methods != NULL) {
-        free(methods);
-    }
-}
-
 static NSString *dx_firstTextInView(UIView *view) {
     if ([view isKindOfClass:[UILabel class]]) {
         return ((UILabel *)view).text;
@@ -575,10 +558,6 @@ static void dx_evenOutTabBar(UIView *bar) {
     } else {
         [DouXTabsDebugReport appendString:@"no top/tab-bar toggle enabled\n"];
     }
-
-    dx_dumpMethods("TTKNoticeUnreadCountManager");
-    dx_dumpMethods("TTKNoticeUnreadCountModel");
-    dx_dumpMethods("TTKNoticeUnreadCountHelper");
 
     [[NSUserDefaults standardUserDefaults] setObject:DouXTabsDebugReport forKey:@"tab_debug_report"];
     [[NSUserDefaults standardUserDefaults] synchronize];
