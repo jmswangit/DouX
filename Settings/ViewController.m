@@ -1,3 +1,10 @@
+//
+//  ViewController.h
+//  StaticTableView
+//
+//  Created by raul on 08/10/2024.
+//
+
 #import "ViewController.h"
 #import "CountryTable.h"
 #import "LiveActions.h"
@@ -38,7 +45,7 @@
 }
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    return 10;
+    return 11;
 }
 
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
@@ -50,18 +57,20 @@
         case 2:
             return @"Confirm";
         case 3:
-            return @"Other";
+            return @"Inbox & AI";
         case 4:
-            return @"Media Vault";
+            return @"Other";
         case 5:
-            return @"Region";
+            return @"Media Vault";
         case 6:
-            return @"Live Button Function";
+            return @"Region";
         case 7:
-            return @"Playback Speed";
+            return @"Live Button Function";
         case 8:
-            return @"Developer";
+            return @"Playback Speed";
         case 9:
+            return @"Developer";
+        case 10:
             return @"Credits";
         default:
             break;
@@ -74,13 +83,14 @@
         case 0: return 15;
         case 1: return 4;
         case 2: return 4;
-        case 3: return 10;
-        case 4: return 2;
+        case 3: return 2;
+        case 4: return 10;
         case 5: return 2;
         case 6: return 2;
         case 7: return 2;
-        case 8: return 3;
+        case 8: return 2;
         case 9: return 2;
+        case 10: return 2;
         default: return 0;
     }
 }
@@ -120,6 +130,11 @@
         }
     } else if (indexPath.section == 3) {
         switch (indexPath.row) {
+            case 0: return [self createSwitchCellWithTitle:@"Hide Tako (AI)" Detail:@"Hide TikTok's AI assistant (Tako) entrances" Key:@"hide_tako"];
+            case 1: return [self createSwitchCellWithTitle:@"Hide Comment Likes" Detail:@"Hide \"liked your comment\" entries from the Activity inbox" Key:@"hide_comment_like_notices"];
+        }
+    } else if (indexPath.section == 4) {
+        switch (indexPath.row) {
             case 0: return [self createSwitchCellWithTitle:@"Always Open Safari" Detail:@"Always open links in Safari" Key:@"openInBrowser"];
             case 1: return [self createSwitchCellWithTitle:@"Enable Fake Changes" Detail:@"Enable fake profile changes" Key:@"en_fake"];
             case 2: return [self createTextFieldCellWithTitle:@"Follower Count" Key:@"follower_count"];
@@ -131,7 +146,7 @@
             case 8: return [self createSwitchCellWithTitle:@"App Lock" Detail:@"Lock the app with a passcode" Key:@"padlock"];
             case 9: return [self createSwitchCellWithTitle:@"Enable Flex" Detail:@"Developers Only, DON'T touch it if you don't know what you are doing." Key:@"flex_enabled"];
         }
-    } else if (indexPath.section == 4) {
+    } else if (indexPath.section == 5) {
         if (indexPath.row == 0) {
             UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:nil];
             cell.textLabel.text = @"Media Vault";
@@ -142,7 +157,7 @@
         } else {
             return [self createSwitchCellWithTitle:@"Show Vault Button" Detail:@"Show a button on the feed to open the vault" Key:@"show_vault_button"];
         }
-    } else if (indexPath.section == 5) {
+    } else if (indexPath.section == 6) {
         switch (indexPath.row) {
             case 0: return [self createSwitchCellWithTitle:@"Enable Region Changing" Detail:@"Enable region changing functionality" Key:@"en_region"];
             case 1: {
@@ -153,7 +168,7 @@
                 return cell;
             }
         }
-    } else if (indexPath.section == 6) {
+    } else if (indexPath.section == 7) {
         switch (indexPath.row) {
             case 0: return [self createSwitchCellWithTitle:@"Live Button Action" Detail:@"Change The Default Live Button Action" Key:@"en_livefunc"];
             case 1: {
@@ -167,7 +182,7 @@
                 return cell;
             }
         }
-    } else if (indexPath.section == 7) {
+    } else if (indexPath.section == 8) {
         switch (indexPath.row) {
             case 0: return [self createSwitchCellWithTitle:@"Playback Speed" Detail:@"Enable Presistent Playback Speed." Key:@"playback_en"];
             case 1: {
@@ -180,12 +195,12 @@
                 return cell;
             }
         }
-    } else if (indexPath.section == 8) {
+    } else if (indexPath.section == 9) {
         switch (indexPath.row) {
             case 0: return [self createLinkCellWithTitle:@"Kunihir0" Detail:@"Github Page" Image:@"link"];
             case 1: return [self createLinkCellWithTitle:@"FBI" Detail:@"X Page" Image:@"link"];
         }
-    } else if (indexPath.section == 9) {
+    } else if (indexPath.section == 10) {
         switch (indexPath.row) {
             case 0: return [self createLinkCellWithTitle:@"BHTikTok" Detail:@"Original Tweak" Image:@"link"];
             case 1: return [self createLinkCellWithTitle:@"BHTikTok++" Detail:@"Forked Tweak" Image:@"link"];
@@ -195,30 +210,30 @@
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
-    if (indexPath.section == 4 && indexPath.row == 0) {
+    if (indexPath.section == 5 && indexPath.row == 0) {
         UICollectionViewFlowLayout *layout = [[UICollectionViewFlowLayout alloc] init];
         VaultViewController *vaultVC = [[VaultViewController alloc] initWithCollectionViewLayout:layout];
         UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:vaultVC];
         [self presentViewController:navController animated:YES completion:nil];
-    } else if (indexPath.section == 5 && indexPath.row == 1) {
+    } else if (indexPath.section == 6 && indexPath.row == 1) {
         CountryTable *countryTable = [[CountryTable alloc] init];
         UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:countryTable];
         [self presentViewController:navController animated:YES completion:nil];
-    } else if (indexPath.section == 6 && indexPath.row == 1) {
+    } else if (indexPath.section == 7 && indexPath.row == 1) {
         LiveActions *liveActions = [[LiveActions alloc] init];
         UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:liveActions];
         [self presentViewController:navController animated:YES completion:nil];
-    } else if (indexPath.section == 7 && indexPath.row == 1) {
+    } else if (indexPath.section == 8 && indexPath.row == 1) {
         PlaybackSpeed *playbackSpeed = [[PlaybackSpeed alloc] init];
         UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:playbackSpeed];
         [self presentViewController:navController animated:YES completion:nil];
-    } else if (indexPath.section == 8) {
+    } else if (indexPath.section == 9) {
         if (indexPath.row == 0) {
             [[UIApplication sharedApplication] openURL:[NSURL URLWithString:@"https://github.com/kunihir0"] options:@{} completionHandler:nil];
         } else if (indexPath.row == 1) {
             [[UIApplication sharedApplication] openURL:[NSURL URLWithString:@"https://x.com/FBI"] options:@{} completionHandler:nil];
         }
-    } else if (indexPath.section == 9) {
+    } else if (indexPath.section == 10) {
         if (indexPath.row == 0) {
             [[UIApplication sharedApplication] openURL:[NSURL URLWithString:@"https://github.com/BandarHL/BHTikTok"] options:@{} completionHandler:nil];
         } else if (indexPath.row == 1) {

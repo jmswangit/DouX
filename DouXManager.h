@@ -43,6 +43,8 @@
 + (BOOL)appLock;
 + (BOOL)flexEnabled;
 + (BOOL)showVaultButton;
++ (BOOL)hideTako;
++ (BOOL)hideCommentLikeNotices;
 + (void)showSaveVC:(NSArray<NSURL *> *)item;
 + (void)cleanCache;
 + (BOOL)isEmpty:(NSURL *)url;

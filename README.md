@@ -19,6 +19,19 @@ A powerful iOS tweak that enhances your TikTok experience with additional featur
 - Region Spoofing: Access content from different countries
 - Enhanced Playback: Speed controls and auto-play options
 
+## Fork additions
+
+This fork adds a dedicated **Inbox & AI** section to DouX settings with two privacy toggles:
+
+- **Hide Tako (AI)** — hides TikTok's AI assistant (Tako) entrances across the feed, search and comment bar.
+- **Hide Comment Likes** — removes "liked your comment" entries from the Activity / inbox list.
+
+Both are backed by `NSUserDefaults` keys (`hide_tako`, `hide_comment_like_notices`) read through `DouXManager`
+and implemented in `hooks/hide_tako.x` and `hooks/hide_notices.x`. Toggle them and relaunch TikTok to apply.
+
+To build and run the tweak without a jailbreak (LiveContainer / TrollStore), use the **Build DouX Deb**
+workflow, then inject the resulting `.deb` into a decrypted IPA with `scripts/ipa_packager.py`.
+
 ## Installation
 
 ### Requirements

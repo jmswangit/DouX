@@ -193,9 +193,14 @@ def main(ipa_input, tweak_url):
                 if debian_layout_path_bak.exists():
                     shutil.move(debian_layout_path_bak, debian_layout_path)
                 run_command(["git", "apply", "-R", str(PATCH_FILE)])
-        else:
+        elif tweak_url.startswith(('http://', 'https://')):
             print("\n--- 📥 Downloading Tweak ---")
             download_file(tweak_url, tweak_deb)
+        elif os.path.isfile(os.path.expanduser(tweak_url)):
+            print(f"\n📂 Using local tweak file: {tweak_url}")
+            shutil.copy(os.path.expanduser(tweak_url), tweak_deb)
+        else:
+            raise FileNotFoundError(f"Tweak input '{tweak_url}' is not a valid URL or an existing file path.")
         
         validate_file_type(
             tweak_deb,
