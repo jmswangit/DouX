@@ -55,6 +55,8 @@
 + (BOOL)hideTabPlus;
 + (BOOL)hideSidebarArrow;
 + (BOOL)evenOutTabs;
++ (BOOL)hideAnchorLink;
++ (BOOL)hideSearchSuggestion;
 + (void)showSaveVC:(NSArray<NSURL *> *)item;
 + (void)cleanCache;
 + (BOOL)isEmpty:(NSURL *)url;

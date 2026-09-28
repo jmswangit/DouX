@@ -180,6 +180,14 @@ static os_log_t douxmanager_log;
 + (BOOL)evenOutTabs {
     return [[NSUserDefaults standardUserDefaults] boolForKey:@"even_out_tabs"];
 }
+
++ (BOOL)hideAnchorLink {
+    return [[NSUserDefaults standardUserDefaults] boolForKey:@"hide_anchor_link"];
+}
+
++ (BOOL)hideSearchSuggestion {
+    return [[NSUserDefaults standardUserDefaults] boolForKey:@"hide_search_suggestion"];
+}
 + (void)cleanCache {
     NSArray <NSURL *> *DocumentFiles = [[NSFileManager defaultManager] contentsOfDirectoryAtURL:[NSURL fileURLWithPath:NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, true).firstObject] includingPropertiesForKeys:@[] options:NSDirectoryEnumerationSkipsHiddenFiles error:nil];
     

@@ -71,7 +71,7 @@ extern NSMutableString *DouXTabsDebugReport;
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     switch (section) {
-        case 0: return 16;
+        case 0: return 18;
         case 1: return 8;
         case 2: return 4;
         case 3: return 4;
@@ -106,6 +106,8 @@ extern NSMutableString *DouXTabsDebugReport;
             case 13: return [self createSwitchCellWithTitle:@"Skip Recommendations" Detail:@"Skip recommended videos" Key:@"skip_recommnedations"];
             case 14: return [self createSwitchCellWithTitle:@"Upload Region" Detail:@"Show Upload Region Flag Next to Username" Key:@"upload_region"];
             case 15: return [self createSwitchCellWithTitle:@"Hide Sidebar Arrow" Detail:@"Hide the little slide-out arrow at the top-left of the feed" Key:@"hide_sidebar_arrow"];
+            case 16: return [self createSwitchCellWithTitle:@"Hide Suggested Search" Detail:@"Hide the search suggestion bar at the bottom of a video" Key:@"hide_search_suggestion"];
+            case 17: return [self createSwitchCellWithTitle:@"Hide Anchor Link" Detail:@"Hide the shop / location / show link above the creator's username" Key:@"hide_anchor_link"];
         }
     } else if (indexPath.section == 1) {
         switch (indexPath.row) {
