@@ -45,6 +45,62 @@ static void dx_setBoolValue(id object, NSString *key, BOOL value) {
     }
 }
 
+extern NSMutableString *DouXTabsDebugReport;
+static BOOL gRSBannerProbed;
+
+static void dx_probeRSBannerContainer(id element) {
+    if (gRSBannerProbed || DouXTabsDebugReport == nil) {
+        return;
+    }
+    gRSBannerProbed = YES;
+    [DouXTabsDebugReport appendString:@"\n--- RS banner element views ---\n"];
+
+    for (Class cls = object_getClass(element); cls != Nil && cls != [NSObject class]; cls = class_getSuperclass(cls)) {
+        unsigned int count = 0;
+        Ivar *ivars = class_copyIvarList(cls, &count);
+        for (unsigned int i = 0; i < count; i++) {
+            Ivar ivar = ivars[i];
+            id value = nil;
+            @try {
+                value = object_getIvar(element, ivar);
+            } @catch (NSException *exception) {
+                continue;
+            }
+            if ([value isKindOfClass:[UIView class]]) {
+                UIView *v = (UIView *)value;
+                NSString *heightConstant = @"none";
+                for (NSLayoutConstraint *constraint in v.constraints) {
+                    if (constraint.firstItem == v && constraint.firstAttribute == NSLayoutAttributeHeight) {
+                        heightConstant = [NSString stringWithFormat:@"%.1f", constraint.constant];
+                        break;
+                    }
+                }
+                [DouXTabsDebugReport appendFormat:@"%s = %s frame=%@ super=%@ hidden=%d h=%@\n",
+                    ivar_getName(ivar), object_getClassName(v), NSStringFromCGRect(v.frame),
+                    v.superview ? NSStringFromClass([v.superview class]) : @"(nil)", v.hidden, heightConstant];
+            }
+        }
+        if (ivars != NULL) {
+            free(ivars);
+        }
+    }
+
+    id bar = nil;
+    @try {
+        bar = [element valueForKey:@"trendingBarView"];
+    } @catch (NSException *exception) {
+    }
+    if ([bar isKindOfClass:[UIView class]]) {
+        UIView *v = (UIView *)bar;
+        for (int depth = 0; v != nil && depth < 6; depth++) {
+            [DouXTabsDebugReport appendFormat:@"trendingBar[%d] = %s frame=%@ super=%@\n",
+                depth, object_getClassName(v), NSStringFromCGRect(v.frame),
+                v.superview ? NSStringFromClass([v.superview class]) : @"(nil)"];
+            v = v.superview;
+        }
+    }
+}
+
 %group G_AnchorElement
 %hook AWEPlayInteractionAnchorElement
 - (BOOL)shouldShowAnchorView {
@@ -89,6 +145,11 @@ static void dx_setBoolValue(id object, NSString *key, BOOL value) {
         dx_hideValueView(self, @"trendingBarView");
         dx_setBoolValue(self, @"hideSearchRSBannerDueToVirtualSignal", YES);
     }
+    dx_probeRSBannerContainer(self);
+}
+- (void)containerDidFullyDisplayWithReason:(id)reason {
+    %orig;
+    dx_probeRSBannerContainer(self);
 }
 %end
 %end
