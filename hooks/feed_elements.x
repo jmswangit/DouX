@@ -26,81 +26,6 @@
 @end
 
 static os_log_t feed_elements_log;
-static BOOL gBannerProbed;
-
-extern NSMutableString *DouXTabsDebugReport;
-
-static void dx_collapseSearchBanner(id element) {
-    if (![DouXManager hideSearchSuggestion]) {
-        return;
-    }
-    id barObject = nil;
-    @try {
-        barObject = [element valueForKey:@"trendingBarView"];
-    } @catch (NSException *exception) {
-    }
-    if (![barObject isKindOfClass:[UIView class]]) {
-        return;
-    }
-    UIView *bar = (UIView *)barObject;
-    bar.hidden = YES;
-    bar.alpha = 0.0;
-
-    if (!gBannerProbed) {
-        gBannerProbed = YES;
-        UIView *v = bar;
-        while (v != nil) {
-            [DouXTabsDebugReport appendFormat:@"banner-chain: %s frame=%@\n", object_getClassName(v), NSStringFromCGRect(v.frame)];
-            v = v.superview;
-        }
-    }
-
-    BOOL hasZeroHeight = NO;
-    for (NSLayoutConstraint *constraint in bar.constraints) {
-        BOOL isMine = constraint.firstItem == bar || constraint.secondItem == bar;
-        BOOL isHeight = constraint.firstAttribute == NSLayoutAttributeHeight || constraint.secondAttribute == NSLayoutAttributeHeight;
-        if (isMine && isHeight && constraint.constant == 0) {
-            hasZeroHeight = YES;
-            break;
-        }
-    }
-    if (!hasZeroHeight) {
-        NSLayoutConstraint *zero = [bar.heightAnchor constraintEqualToConstant:0];
-        zero.priority = 999;
-        zero.active = YES;
-    }
-
-    NSArray<NSString *> *containerKeys = @[@"view", @"containerView", @"componentView", @"contentView"];
-    for (NSString *key in containerKeys) {
-        id containerObject = nil;
-        @try {
-            containerObject = [element valueForKey:key];
-        } @catch (NSException *exception) {
-            continue;
-        }
-        if (![containerObject isKindOfClass:[UIView class]]) {
-            continue;
-        }
-        UIView *container = (UIView *)containerObject;
-        if (!gBannerProbed) {
-            [DouXTabsDebugReport appendFormat:@"banner-%@ = %s frame=%@\n", key, object_getClassName(container), NSStringFromCGRect(container.frame)];
-        }
-        BOOL hasZero = NO;
-        for (NSLayoutConstraint *constraint in container.constraints) {
-            BOOL isMine = constraint.firstItem == container || constraint.secondItem == container;
-            BOOL isHeight = constraint.firstAttribute == NSLayoutAttributeHeight || constraint.secondAttribute == NSLayoutAttributeHeight;
-            if (isMine && isHeight && constraint.constant == 0) {
-                hasZero = YES;
-                break;
-            }
-        }
-        if (!hasZero) {
-            NSLayoutConstraint *zero = [container.heightAnchor constraintEqualToConstant:0];
-            zero.priority = 999;
-            zero.active = YES;
-        }
-    }
-}
 
 static void dx_hideValueView(id object, NSString *key) {
     @try {
@@ -153,11 +78,17 @@ static void dx_setBoolValue(id object, NSString *key, BOOL value) {
 %hook TTKFeedSearchRSBannerElement
 - (void)componentViewDidLoad {
     %orig;
-    dx_collapseSearchBanner(self);
+    if ([DouXManager hideSearchSuggestion]) {
+        dx_hideValueView(self, @"trendingBarView");
+        dx_setBoolValue(self, @"hideSearchRSBannerDueToVirtualSignal", YES);
+    }
 }
 - (void)containerWillDisplay {
     %orig;
-    dx_collapseSearchBanner(self);
+    if ([DouXManager hideSearchSuggestion]) {
+        dx_hideValueView(self, @"trendingBarView");
+        dx_setBoolValue(self, @"hideSearchRSBannerDueToVirtualSignal", YES);
+    }
 }
 %end
 %end
