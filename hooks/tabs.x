@@ -19,6 +19,7 @@
 static os_log_t tabs_log;
 static NSMutableDictionary *gOrigIMPs;
 NSMutableString *DouXTabsDebugReport;
+static NSInteger gDropLogCount;
 static NSMutableSet *gSeenItemClasses;
 
 static NSString *dx_stringForKeys(id object, NSArray<NSString *> *keys) {
@@ -87,6 +88,16 @@ static BOOL dx_shouldHideTopTab(id item) {
 }
 
 static BOOL dx_shouldHideBottomTab(id item) {
+    if ([item isKindOfClass:[NSNumber class]]) {
+        NSInteger value = [item integerValue];
+        if ([DouXManager hideTabShop] && value == 7) {
+            return YES;
+        }
+        if ([DouXManager hideTabPlus] && value == 2) {
+            return YES;
+        }
+        return NO;
+    }
     NSString *ident = dx_itemIdentifier(item);
     NSString *title = dx_itemTitle(item);
     const char *className = object_getClassName(item);
@@ -141,7 +152,10 @@ static NSArray *dx_filterTabList(NSArray *items, const char *selectorName) {
 
         if (dx_shouldHideTopTab(item) || dx_shouldHideBottomTab(item) || dx_shouldHideSidebarItem(item)) {
             os_log_info(tabs_log, "tabs: dropped %{public}s", itemClassName);
-            [DouXTabsDebugReport appendFormat:@"  DROPPED@%s = %s (id=%@ title=%@)\n", selectorName, itemClassName, dx_itemIdentifier(item), dx_itemTitle(item)];
+            if (gDropLogCount < 40) {
+                gDropLogCount++;
+                [DouXTabsDebugReport appendFormat:@"  DROPPED@%s = %s (id=%@)\n", selectorName, itemClassName, dx_itemIdentifier(item)];
+            }
             if (kept == nil) {
                 kept = [NSMutableArray arrayWithArray:[items subarrayWithRange:NSMakeRange(0, index)]];
             }
@@ -408,6 +422,15 @@ static void dx_dumpMethods(const char *className) {
         // bottom tab bar (TTKTabBar*Item)
         "tabBarItems",
         "setTabBarItems:",
+        "tabBarItemTypes",
+        "tabBarButtonTypes",
+        "p_decisionItemList",
+        "decisionItemList",
+        "tryDecisitionItemList",
+        "itemSelectModels",
+        "tabbarButtonArray",
+        "currentButtons",
+        "visibleTabBarItems",
         "visibleTabBarItems",
         "decisionItemList",
         "itemSelectModels",
